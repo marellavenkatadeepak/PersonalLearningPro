@@ -8,12 +8,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAuth } from "@/contexts/auth-context";
+import { useFirebaseAuth } from "@/contexts/firebase-auth-context";
 import { Loader2 } from "lucide-react";
 
 // Login form schema
 const loginSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
+  username: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -35,7 +35,7 @@ const registerSchema = z.object({
 type RegisterValues = z.infer<typeof registerSchema>;
 
 export function LoginDialog() {
-  const { login, register: registerUser } = useAuth();
+  const { login, register: registerUser } = useFirebaseAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("login");
 
@@ -78,7 +78,10 @@ export function LoginDialog() {
   async function onRegisterSubmit(data: RegisterValues) {
     try {
       setIsSubmitting(true);
-      await registerUser(data);
+      await registerUser(data.email, data.password, data.name, data.role as any, {
+        class: data.class,
+        subjects: data.subject ? [data.subject] : []
+      });
     } catch (error) {
       console.error("Registration failed:", error);
     } finally {
@@ -113,9 +116,9 @@ export function LoginDialog() {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Username</FormLabel>
+                        <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter your username" {...field} />
+                          <Input placeholder="Enter your email" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -148,8 +151,8 @@ export function LoginDialog() {
                   {/* Demo Account Info */}
                   <div className="mt-4 p-3 bg-gray-50 rounded-md text-sm">
                     <p className="font-medium mb-1">Demo accounts:</p>
-                    <p>Teacher: username: <strong>teacher1</strong>, password: <strong>password123</strong></p>
-                    <p>Student: username: <strong>student1</strong>, password: <strong>password123</strong></p>
+                    <p>Teacher: email: <strong>teacher@example.com</strong>, password: <strong>password123</strong></p>
+                    <p>Student: email: <strong>student@example.com</strong>, password: <strong>password123</strong></p>
                   </div>
                 </form>
               </Form>
