@@ -6,11 +6,11 @@ import {
   BarChart,
   Menu,
 } from "lucide-react";
-import { useAuth } from "@/contexts/auth-context";
+import { useFirebaseAuth } from "@/contexts/firebase-auth-context";
 
 export function MobileNav() {
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { currentUser } = useFirebaseAuth();
 
   const teacherNavItems = [
     {
@@ -58,7 +58,7 @@ export function MobileNav() {
     },
   ];
 
-  const navItems = user?.role === "student" ? studentNavItems : teacherNavItems;
+  const navItems = currentUser?.profile?.role === "student" ? studentNavItems : teacherNavItems;
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-neutral-800 shadow-md z-10 flex justify-around py-2 border-t border-neutral-200 dark:border-neutral-700">

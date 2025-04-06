@@ -4,7 +4,7 @@ import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useAuth } from "@/contexts/auth-context";
+import { useFirebaseAuth } from "@/contexts/firebase-auth-context";
 import { useLocation } from "wouter";
 
 import {
@@ -43,7 +43,7 @@ type TestFormValues = z.infer<typeof testSchema>;
 
 export function TestDetailsForm() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { currentUser } = useFirebaseAuth();
   const [_, setLocation] = useLocation();
 
   const form = useForm<TestFormValues>({
@@ -51,7 +51,7 @@ export function TestDetailsForm() {
     defaultValues: {
       title: "",
       description: "",
-      subject: user?.subject || "",
+      subject: currentUser?.profile?.subjects?.[0] || "",
       class: "",
       testDate: new Date().toISOString().split("T")[0],
       duration: 60,
@@ -63,14 +63,14 @@ export function TestDetailsForm() {
 
   const createTestMutation = useMutation({
     mutationFn: async (data: TestFormValues) => {
-      if (!user?.id) throw new Error("User ID not found");
+      if (!currentUser?.user?.uid) throw new Error("User ID not found");
       
       // Convert date string to ISO format
       const testDate = new Date(data.testDate).toISOString();
       
       return apiRequest("POST", "/api/tests", {
         ...data,
-        teacherId: user.id,
+        teacherId: currentUser.user.uid,
         testDate,
       });
     },
