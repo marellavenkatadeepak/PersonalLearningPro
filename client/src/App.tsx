@@ -11,6 +11,7 @@ import CreateTest from "@/pages/create-test";
 import OcrScan from "@/pages/ocr-scan";
 import Analytics from "@/pages/analytics";
 import AiTutor from "@/pages/ai-tutor";
+import StudentDirectory from "@/pages/student-directory";
 import { FirebaseAuthProvider, useFirebaseAuth } from "./contexts/firebase-auth-context";
 import { ThemeProvider } from "./contexts/theme-context";
 import { Loader2 } from "lucide-react";
@@ -587,6 +588,7 @@ function Router() {
       <Route path="/ocr-scan" component={withLayout(OcrScan)} />
       <Route path="/analytics" component={withLayout(Analytics)} />
       <Route path="/ai-tutor" component={withLayout(AiTutor)} />
+      <Route path="/student-directory" component={withLayout(StudentDirectory)} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

@@ -97,6 +97,11 @@ export function Sidebar({ className }: SidebarProps) {
       icon: <GraduationCap className="h-5 w-5" />,
     },
     {
+      title: "Student Directory",
+      href: "/student-directory",
+      icon: <Award className="h-5 w-5" />,
+    },
+    {
       title: "Analytics",
       href: "/analytics",
       icon: <BarChart className="h-5 w-5" />,
@@ -146,6 +151,11 @@ export function Sidebar({ className }: SidebarProps) {
       icon: <School className="h-5 w-5" />,
     },
     {
+      title: "Student Directory",
+      href: "/student-directory",
+      icon: <GraduationCap className="h-5 w-5" />,
+    },
+    {
       title: "Analytics",
       href: "/analytics",
       icon: <BarChart className="h-5 w-5" />,
@@ -188,6 +198,11 @@ export function Sidebar({ className }: SidebarProps) {
       title: "Students",
       href: "/students",
       icon: <Users className="h-5 w-5" />,
+    },
+    {
+      title: "Student Directory",
+      href: "/student-directory",
+      icon: <GraduationCap className="h-5 w-5" />,
     },
     {
       title: "AI Study Plans",
