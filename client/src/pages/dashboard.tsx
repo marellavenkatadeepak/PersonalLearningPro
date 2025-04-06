@@ -22,7 +22,7 @@ import { RecentTestsTable } from "@/components/dashboard/recent-tests-table";
 import { TopStudents } from "@/components/dashboard/top-students";
 import { PerformanceChart } from "@/components/dashboard/performance-chart";
 import { ClassSchedule } from "@/components/dashboard/class-schedule";
-import { useAuth } from "@/contexts/auth-context";
+import { useFirebaseAuth } from "@/contexts/firebase-auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -39,7 +39,7 @@ interface Notification {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { currentUser } = useFirebaseAuth();
   const [title] = useState("Teacher Dashboard");
   
   // Fetch notification data (mock for now)
@@ -135,7 +135,7 @@ export default function Dashboard() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                   <div>
                     <h1 className="text-2xl font-bold mb-2">
-                      Welcome back, {user?.name || "Teacher"}!
+                      Welcome back, {currentUser?.profile?.displayName || "Teacher"}!
                     </h1>
                     <p className="text-muted-foreground">
                       {`Here's your teaching dashboard with insights and activities.`}
