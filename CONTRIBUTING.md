@@ -7,6 +7,29 @@ We love to receive contributions from the community and are thrilled that you're
 Join our Discord server for discussions, support, and to connect with other contributors:
 [https://discord.gg/ewHtFk9G](https://discord.gg/ewHtFk9G)
 
+---
+
+## 🏆 Top Contributor Reward
+
+<p align="center">
+  <img src="assets/burger-reward.png" alt="Burger Reward" width="180" />
+</p>
+
+**🍔 The top contributor gets a meal from the admin at McDonald's!**
+
+But that's not all — the **top contributor** will also earn a spot as one of the **Super 5 Core Members** for PersonalLearningPro. This is your chance to shape the future of this product, have a direct say in key decisions, and be recognized as a core part of the team.
+
+**How to become the top contributor:**
+- Submit high-quality pull requests
+- Fix bugs and resolve issues
+- Add meaningful new features
+- Help other contributors and review PRs
+- Improve documentation and testing
+
+> 🎉 *Contribute, rise to the top, enjoy a burger, and join the Super 5!*
+
+---
+
 ## Getting Started
 
 ### Option 1: Docker (Recommended)
