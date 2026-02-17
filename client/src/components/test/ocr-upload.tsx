@@ -26,26 +26,30 @@ export function OCRUpload({ onOCRComplete }: OCRUploadProps) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const { toast } = useToast();
 
+  // Track which file ID is currently being processed
+  const [processingFileId, setProcessingFileId] = useState<string | null>(null);
+
   const processOCRMutation = useMutation({
     mutationFn: async (imageData: string) => {
       const response = await apiRequest("POST", "/api/ocr", { imageData });
       return response.json();
     },
-    onSuccess: (data, _, context) => {
-      if (context && typeof context === "string") {
+    onSuccess: (data) => {
+      const fileId = processingFileId;
+      if (fileId) {
         // Update file status
         setFiles((prev) =>
           prev.map((file) =>
-            file.id === context
+            file.id === fileId
               ? {
-                  ...file,
-                  status: "complete",
-                  progress: 100,
-                  data: {
-                    text: data.text,
-                    confidence: data.confidence,
-                  },
-                }
+                ...file,
+                status: "complete",
+                progress: 100,
+                data: {
+                  text: data.text,
+                  confidence: data.confidence,
+                },
+              }
               : file
           )
         );
@@ -61,17 +65,18 @@ export function OCRUpload({ onOCRComplete }: OCRUploadProps) {
         });
       }
     },
-    onError: (error, _, context) => {
-      if (context && typeof context === "string") {
+    onError: (error) => {
+      const fileId = processingFileId;
+      if (fileId) {
         // Update file status
         setFiles((prev) =>
           prev.map((file) =>
-            file.id === context
+            file.id === fileId
               ? {
-                  ...file,
-                  status: "error",
-                  progress: 100,
-                }
+                ...file,
+                status: "error",
+                progress: 100,
+              }
               : file
           )
         );
@@ -93,7 +98,7 @@ export function OCRUpload({ onOCRComplete }: OCRUploadProps) {
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i];
       const fileId = Date.now().toString() + i;
-      
+
       // Check file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
         toast({
@@ -103,7 +108,7 @@ export function OCRUpload({ onOCRComplete }: OCRUploadProps) {
         });
         continue;
       }
-      
+
       // Check file type
       if (!["image/jpeg", "image/jpg", "image/png", "application/pdf"].includes(file.type)) {
         toast({
@@ -113,7 +118,7 @@ export function OCRUpload({ onOCRComplete }: OCRUploadProps) {
         });
         continue;
       }
-      
+
       // Add file to state
       setFiles((prev) => [
         ...prev,
@@ -125,7 +130,7 @@ export function OCRUpload({ onOCRComplete }: OCRUploadProps) {
           progress: 0,
         },
       ]);
-      
+
       // Read file as data URL
       const reader = new FileReader();
       reader.onloadstart = () => {
@@ -136,7 +141,7 @@ export function OCRUpload({ onOCRComplete }: OCRUploadProps) {
           )
         );
       };
-      
+
       reader.onprogress = (event) => {
         if (event.lengthComputable) {
           const progress = Math.round((event.loaded / event.total) * 50);
@@ -147,7 +152,7 @@ export function OCRUpload({ onOCRComplete }: OCRUploadProps) {
           );
         }
       };
-      
+
       reader.onload = () => {
         // Update progress to 60% and status to processing
         setFiles((prev) =>
@@ -157,17 +162,16 @@ export function OCRUpload({ onOCRComplete }: OCRUploadProps) {
               : f
           )
         );
-        
+
         // Get base64 data
         const base64Data = reader.result as string;
         const base64Content = base64Data.split(",")[1];
-        
+
         // Process with OCR
-        processOCRMutation.mutate(base64Content, {
-          onMutate: () => fileId,
-        });
+        setProcessingFileId(fileId);
+        processOCRMutation.mutate(base64Content);
       };
-      
+
       reader.onerror = () => {
         setFiles((prev) =>
           prev.map((f) =>
@@ -176,17 +180,17 @@ export function OCRUpload({ onOCRComplete }: OCRUploadProps) {
               : f
           )
         );
-        
+
         toast({
           title: "Upload Failed",
           description: `Failed to read ${file.name}`,
           variant: "destructive",
         });
       };
-      
+
       reader.readAsDataURL(file);
     }
-    
+
     // Reset input
     e.target.value = "";
   };
@@ -223,7 +227,7 @@ export function OCRUpload({ onOCRComplete }: OCRUploadProps) {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const fileInput = document.getElementById("file-upload") as HTMLInputElement;
       fileInput.files = e.dataTransfer.files;

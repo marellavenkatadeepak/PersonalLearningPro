@@ -8,9 +8,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Set up session middleware
+// Enforce SESSION_SECRET in production
 if (!process.env.SESSION_SECRET && process.env.NODE_ENV === 'production') {
-  console.warn("⚠️  SESSION_SECRET is not set. Using an insecure default. Set SESSION_SECRET in your .env file.");
+  throw new Error("SESSION_SECRET environment variable is required in production. Set it in your .env file.");
 }
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-only-insecure-secret',

@@ -1,9 +1,11 @@
-# ── PersonalLearningPro Development Dockerfile ──
-# Full-stack Vite + React + Express app (single-process monolith)
+# ── PersonalLearningPro Dockerfile ──
+# Multi-stage build: development + production
 
-FROM node:20-slim
+# ────────────────────────────────────
+# Stage 1: Development
+# ────────────────────────────────────
+FROM node:20-slim AS development
 
-# Set working directory
 WORKDIR /app
 
 # Copy dependency manifests first for layer caching
@@ -20,3 +22,36 @@ EXPOSE 5001
 
 # Start in development mode
 CMD ["npm", "run", "dev"]
+
+# ────────────────────────────────────
+# Stage 2: Build
+# ────────────────────────────────────
+FROM node:20-slim AS build
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# ────────────────────────────────────
+# Stage 3: Production
+# ────────────────────────────────────
+FROM node:20-slim AS production
+
+WORKDIR /app
+
+# Copy dependency manifests and install production deps only
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+# Copy built artifacts from the build stage
+COPY --from=build /app/dist ./dist
+
+EXPOSE 5001
+
+ENV NODE_ENV=production
+
+CMD ["npm", "run", "start"]

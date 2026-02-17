@@ -69,7 +69,7 @@ export default function CreateTest() {
 
               <CardContent className="p-6">
                 <TabsContent value="test-details" className="mt-0">
-                  <TestDetailsForm onTestCreated={handleTestCreated} />
+                  <TestDetailsForm />
                 </TabsContent>
 
                 <TabsContent value="add-questions" className="mt-0">
@@ -84,10 +84,10 @@ export default function CreateTest() {
                         </p>
                       </div>
 
-                      <QuestionForm 
-                        testId={testId} 
-                        order={questionOrder} 
-                        onSuccess={handleQuestionAdded} 
+                      <QuestionForm
+                        testId={testId}
+                        order={questionOrder}
+                        onSuccess={handleQuestionAdded}
                       />
                     </div>
                   ) : (
