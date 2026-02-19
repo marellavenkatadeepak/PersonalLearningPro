@@ -169,7 +169,7 @@ export class MemStorage implements IStorage {
     const test: Test = { 
       ...insertTest, 
       id,
-      createdAt: insertTest.createdAt ?? new Date(),
+      createdAt: new Date(),
       status: insertTest.status ?? "draft",
       duration: insertTest.duration ?? 60,
       totalMarks: insertTest.totalMarks ?? 100,
@@ -287,7 +287,18 @@ export class MemStorage implements IStorage {
   // Answer operations
   async createAnswer(insertAnswer: InsertAnswer): Promise<Answer> {
     const id = this.answerIdCounter++;
-    const answer: Answer = { ...insertAnswer, id };
+    const answer: Answer = { 
+      ...insertAnswer, 
+      id,
+      text: insertAnswer.text ?? null,
+      selectedOption: insertAnswer.selectedOption ?? null,
+      imageUrl: insertAnswer.imageUrl ?? null,
+      ocrText: insertAnswer.ocrText ?? null,
+      score: insertAnswer.score ?? null,
+      aiConfidence: insertAnswer.aiConfidence ?? null,
+      aiFeedback: insertAnswer.aiFeedback ?? null,
+      isCorrect: insertAnswer.isCorrect ?? null,
+    };
     this.answers.set(id, answer);
     return answer;
   }
@@ -313,7 +324,11 @@ export class MemStorage implements IStorage {
   // Analytics operations
   async createAnalytics(insertAnalytics: InsertAnalytics): Promise<Analytics> {
     const id = this.analyticsIdCounter++;
-    const analytics: Analytics = { ...insertAnalytics, id };
+    const analytics: Analytics = { 
+      ...insertAnalytics, 
+      id,
+      insightDate: insertAnalytics.insightDate ?? new Date(),
+    };
     this.analytics.set(id, analytics);
     return analytics;
   }
