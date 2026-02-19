@@ -14,6 +14,7 @@ import AiTutor from "@/pages/ai-tutor";
 import StudentDirectory from "@/pages/student-directory";
 import { FirebaseAuthProvider, useFirebaseAuth } from "./contexts/firebase-auth-context";
 import { ThemeProvider } from "./contexts/theme-context";
+import "./blackboard-login.css";
 import { Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { UserRole } from "./lib/firebase";
@@ -28,22 +29,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 import {
   Form,
   FormControl,
@@ -70,13 +55,13 @@ function FirebaseAuthDialog() {
   const [isNewGoogleUser, setIsNewGoogleUser] = useState(false);
   const [tempGoogleUser, setTempGoogleUser] = useState<User | null>(null);
   const [authTab, setAuthTab] = useState<"login" | "register">("login");
-  
+
   // Form schemas
   const loginSchema = z.object({
     email: z.string().email({ message: "Please enter a valid email address" }),
     password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   });
-  
+
   const registerSchema = z.object({
     name: z.string().min(2, { message: "Name must be at least 2 characters" }),
     email: z.string().email({ message: "Please enter a valid email address" }),
@@ -85,13 +70,13 @@ function FirebaseAuthDialog() {
       required_error: "Please select a role",
     }),
   });
-  
+
   const roleSchema = z.object({
     role: z.enum(["student", "teacher", "principal", "admin", "parent"], {
       required_error: "Please select a role",
     }),
   });
-  
+
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -99,7 +84,7 @@ function FirebaseAuthDialog() {
       password: "",
     },
   });
-  
+
   const registerForm = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -109,14 +94,14 @@ function FirebaseAuthDialog() {
       role: "student",
     },
   });
-  
+
   const roleForm = useForm<z.infer<typeof roleSchema>>({
     resolver: zodResolver(roleSchema),
     defaultValues: {
       role: "student",
     },
   });
-  
+
   async function onLoginSubmit(data: z.infer<typeof loginSchema>) {
     try {
       await login(data.email, data.password);
@@ -124,7 +109,7 @@ function FirebaseAuthDialog() {
       console.error("Login failed:", error);
     }
   }
-  
+
   async function onRegisterSubmit(data: z.infer<typeof registerSchema>) {
     try {
       const additionalData = getRoleSpecificData(data.role);
@@ -133,10 +118,10 @@ function FirebaseAuthDialog() {
       console.error("Registration failed:", error);
     }
   }
-  
+
   async function onRoleSubmit(data: z.infer<typeof roleSchema>) {
     if (!tempGoogleUser) return;
-    
+
     try {
       const additionalData = getRoleSpecificData(data.role);
       await completeGoogleRegistration(tempGoogleUser, data.role as UserRole, additionalData);
@@ -146,7 +131,7 @@ function FirebaseAuthDialog() {
       console.error("Google registration completion failed:", error);
     }
   }
-  
+
   function getRoleSpecificData(role: string) {
     switch (role) {
       case "student":
@@ -163,11 +148,11 @@ function FirebaseAuthDialog() {
         return {};
     }
   }
-  
+
   async function handleGoogleLogin() {
     try {
       const result = await googleLogin();
-      
+
       if (result.isNewUser) {
         setIsNewGoogleUser(true);
         setTempGoogleUser(result.user);
@@ -176,7 +161,7 @@ function FirebaseAuthDialog() {
       console.error("Google login failed:", error);
     }
   }
-  
+
   // New Google user role selection
   if (isNewGoogleUser) {
     return (
@@ -196,8 +181,8 @@ function FirebaseAuthDialog() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Role</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
+                    <Select
+                      onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -224,273 +209,269 @@ function FirebaseAuthDialog() {
       </Dialog>
     );
   }
-  
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-background to-muted/50">
-      <div className="w-full max-w-4xl grid md:grid-cols-2 overflow-hidden shadow-xl rounded-xl">
-        <div className="p-8 bg-gradient-to-br from-primary/80 to-primary text-white flex flex-col justify-center">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">Master Plan</h1>
-            <p className="text-white/90">
-              AI-powered personalized learning platform
-            </p>
+    <div className="bb-wrapper">
+      {/* Decorative chalk doodles */}
+      <div className="bb-doodle bb-doodle--atom">
+        <svg viewBox="0 0 60 60" fill="none" stroke="#e8e4d9" strokeWidth="1.2">
+          <ellipse cx="30" cy="30" rx="28" ry="10" />
+          <ellipse cx="30" cy="30" rx="28" ry="10" transform="rotate(60 30 30)" />
+          <ellipse cx="30" cy="30" rx="28" ry="10" transform="rotate(120 30 30)" />
+          <circle cx="30" cy="30" r="3" fill="#e8e4d9" />
+        </svg>
+      </div>
+      <span className="bb-doodle bb-doodle--formula">E = mc²</span>
+      <div className="bb-doodle bb-doodle--star">
+        <svg viewBox="0 0 40 40" fill="none" stroke="#e8e4d9" strokeWidth="1.2">
+          <polygon points="20,2 25,15 38,15 27,24 31,38 20,29 9,38 13,24 2,15 15,15" />
+        </svg>
+      </div>
+      <span className="bb-doodle bb-doodle--pi">π</span>
+
+      {/* Board */}
+      <div className="bb-board">
+        <div className="bb-glass">
+          <h1 className="bb-title">Master Plan</h1>
+          <p className="bb-subtitle">AI-powered personalized learning</p>
+
+          {/* Tab bar */}
+          <div className="bb-tabs">
+            <button
+              type="button"
+              className={`bb-tab ${authTab === "login" ? "bb-tab--active" : ""}`}
+              onClick={() => setAuthTab("login")}
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              className={`bb-tab ${authTab === "register" ? "bb-tab--active" : ""}`}
+              onClick={() => setAuthTab("register")}
+            >
+              Register
+            </button>
           </div>
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <div className="bg-white/20 p-2 rounded-full">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
-                  <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
-                  <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
-                  <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold">AI-powered learning</h3>
-                <p className="text-sm text-white/80">
-                  Personalized assistance and adaptive tests
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="bg-white/20 p-2 rounded-full">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
-                  <path d="M8 7h6" />
-                  <path d="M8 11h8" />
-                  <path d="M8 15h5" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold">Comprehensive Analytics</h3>
-                <p className="text-sm text-white/80">
-                  Track progress and identify areas for improvement
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="bg-white/20 p-2 rounded-full">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M5.8 11.3 2 22l10.7-3.79" />
-                  <path d="M4 3h.01" />
-                  <path d="M22 8h.01" />
-                  <path d="M15 2h.01" />
-                  <path d="M22 20h.01" />
-                  <path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10" />
-                  <path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17" />
-                  <path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.9 9 5.52 9 6.23V7" />
-                  <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold">Engaging Learning</h3>
-                <p className="text-sm text-white/80">
-                  Interactive lessons and gamification elements
-                </p>
-              </div>
-            </div>
+
+          {/* ── LOGIN TAB ── */}
+          {authTab === "login" && (
+            <Form {...loginForm}>
+              <form onSubmit={loginForm.handleSubmit(onLoginSubmit)}>
+                {/* Email */}
+                <FormField
+                  control={loginForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="bb-field">
+                      <label className="bb-label">Email</label>
+                      <FormControl>
+                        <div className="bb-input-wrap">
+                          <svg className="bb-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                          </svg>
+                          <input
+                            className="bb-input"
+                            placeholder="your.email@example.com"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="bb-error" />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Password */}
+                <FormField
+                  control={loginForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="bb-field">
+                      <label className="bb-label">Password</label>
+                      <FormControl>
+                        <div className="bb-input-wrap">
+                          <svg className="bb-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                          <input
+                            className="bb-input"
+                            type="password"
+                            placeholder="••••••••"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="bb-error" />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Remember me / Forgot */}
+                <div className="bb-options-row">
+                  <label className="bb-checkbox-label">
+                    <input type="checkbox" className="bb-checkbox" />
+                    Remember me
+                  </label>
+                  <button type="button" className="bb-forgot">Forgot password?</button>
+                </div>
+
+                <button type="submit" className="bb-btn" disabled={loginForm.formState.isSubmitting}>
+                  {loginForm.formState.isSubmitting ? (
+                    <><span className="bb-spinner" /> Signing in…</>
+                  ) : (
+                    "Sign In"
+                  )}
+                </button>
+              </form>
+            </Form>
+          )}
+
+          {/* ── REGISTER TAB ── */}
+          {authTab === "register" && (
+            <Form {...registerForm}>
+              <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)}>
+                {/* Full Name */}
+                <FormField
+                  control={registerForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="bb-field">
+                      <label className="bb-label">Full Name</label>
+                      <FormControl>
+                        <div className="bb-input-wrap">
+                          <svg className="bb-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                          </svg>
+                          <input className="bb-input" placeholder="John Doe" {...field} />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="bb-error" />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Email */}
+                <FormField
+                  control={registerForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="bb-field">
+                      <label className="bb-label">Email</label>
+                      <FormControl>
+                        <div className="bb-input-wrap">
+                          <svg className="bb-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect width="20" height="16" x="2" y="4" rx="2" />
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                          </svg>
+                          <input className="bb-input" placeholder="your.email@example.com" {...field} />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="bb-error" />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Password */}
+                <FormField
+                  control={registerForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="bb-field">
+                      <label className="bb-label">Password</label>
+                      <FormControl>
+                        <div className="bb-input-wrap">
+                          <svg className="bb-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                          <input className="bb-input" type="password" placeholder="••••••••" {...field} />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="bb-error" />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Role */}
+                <FormField
+                  control={registerForm.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem className="bb-field">
+                      <label className="bb-label">Role</label>
+                      <FormControl>
+                        <div className="bb-input-wrap">
+                          <svg className="bb-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                          </svg>
+                          <select
+                            className="bb-select"
+                            value={field.value}
+                            onChange={field.onChange}
+                          >
+                            <option value="student">Student</option>
+                            <option value="teacher">Teacher</option>
+                            <option value="principal">Principal</option>
+                            <option value="admin">Administrator</option>
+                            <option value="parent">Parent</option>
+                          </select>
+                        </div>
+                      </FormControl>
+                      <FormMessage className="bb-error" />
+                    </FormItem>
+                  )}
+                />
+
+                <button type="submit" className="bb-btn" disabled={registerForm.formState.isSubmitting}>
+                  {registerForm.formState.isSubmitting ? (
+                    <><span className="bb-spinner" /> Creating account…</>
+                  ) : (
+                    "Create Account"
+                  )}
+                </button>
+              </form>
+            </Form>
+          )}
+
+          {/* Divider */}
+          <div className="bb-divider">
+            <span className="bb-divider-line" />
+            <span className="bb-divider-text">Or continue with</span>
+            <span className="bb-divider-line" />
+          </div>
+
+          {/* Google */}
+          <button type="button" className="bb-btn-google" onClick={handleGoogleLogin}>
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
+            </svg>
+            Google
+          </button>
+
+          {/* Footer link */}
+          <div className="bb-footer">
+            {authTab === "login" ? (
+              <>Don&apos;t have an account?{" "}
+                <button type="button" className="bb-footer-link" onClick={() => setAuthTab("register")}>
+                  Sign Up
+                </button>
+              </>
+            ) : (
+              <>Already have an account?{" "}
+                <button type="button" className="bb-footer-link" onClick={() => setAuthTab("login")}>
+                  Sign In
+                </button>
+              </>
+            )}
           </div>
         </div>
-        
-        <Card className="border-0 shadow-none rounded-none">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>
-              Sign in to your account to continue
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs 
-              defaultValue={authTab} 
-              onValueChange={(v) => setAuthTab(v as "login" | "register")}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login">
-                <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                    <FormField
-                      control={loginForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="your.email@example.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={loginForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <Button type="submit" className="w-full">
-                      Sign In
-                    </Button>
-                  </form>
-                </Form>
-              </TabsContent>
-              
-              <TabsContent value="register">
-                <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                    <FormField
-                      control={registerForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="John Doe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="your.email@example.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="role"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Role</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a role" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="student">Student</SelectItem>
-                              <SelectItem value="teacher">Teacher</SelectItem>
-                              <SelectItem value="principal">Principal</SelectItem>
-                              <SelectItem value="admin">Administrator</SelectItem>
-                              <SelectItem value="parent">Parent</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <Button type="submit" className="w-full">
-                      Create Account
-                    </Button>
-                  </form>
-                </Form>
-              </TabsContent>
-            </Tabs>
-            
-            <div className="relative mt-6">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-            </div>
-            
-            <div className="mt-6">
-              <Button 
-                variant="outline" 
-                className="w-full" 
-                onClick={handleGoogleLogin}
-              >
-                <svg
-                  className="mr-2 h-4 w-4"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                  />
-                </svg>
-                Google
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bb-shelf" />
       </div>
     </div>
   );
@@ -537,7 +518,7 @@ const withLayout = (Component: React.ComponentType) => {
 
 function Router() {
   const { currentUser, isLoading } = useFirebaseAuth();
-  
+
   // Loading state while checking authentication
   if (isLoading) {
     return (
@@ -546,16 +527,16 @@ function Router() {
       </div>
     );
   }
-  
+
   // Show auth dialog if not authenticated
   if (!currentUser.user) {
     return <FirebaseAuthDialog />;
   }
-  
+
   // Get appropriate dashboard component based on user role
   const getDashboardComponent = () => {
     const role = currentUser.profile?.role;
-    
+
     switch (role) {
       case "principal":
         return withLayout(PrincipalDashboard);
@@ -571,25 +552,25 @@ function Router() {
         return withLayout(Dashboard);
     }
   };
-  
+
   return (
     <Switch>
       {/* Dashboard route - redirects to appropriate dashboard based on role */}
       <Route path="/" component={getDashboardComponent()} />
-      
+
       {/* Role-specific dashboards */}
       <Route path="/dashboard" component={getDashboardComponent()} />
       <Route path="/principal-dashboard" component={withLayout(PrincipalDashboard)} />
       <Route path="/admin-dashboard" component={withLayout(AdminDashboard)} />
       <Route path="/student-dashboard" component={withLayout(StudentDashboard)} />
-      
+
       {/* Common routes */}
       <Route path="/create-test" component={withLayout(CreateTest)} />
       <Route path="/ocr-scan" component={withLayout(OcrScan)} />
       <Route path="/analytics" component={withLayout(Analytics)} />
       <Route path="/ai-tutor" component={withLayout(AiTutor)} />
       <Route path="/student-directory" component={withLayout(StudentDirectory)} />
-      
+
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
