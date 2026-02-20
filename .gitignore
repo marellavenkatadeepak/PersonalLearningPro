@@ -8,3 +8,4 @@ server/.env.env
 .env
 .agent
 GEMINI.md
+.vscode/
