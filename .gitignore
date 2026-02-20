@@ -6,6 +6,6 @@ vite.config.ts.*
 *.tar.gz
 server/.env.env
 .env
-.agent
+.agent/
 GEMINI.md
 .vscode/
