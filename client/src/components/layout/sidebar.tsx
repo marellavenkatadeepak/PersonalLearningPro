@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useFirebaseAuth } from "@/contexts/firebase-auth-context";
@@ -144,8 +144,6 @@ export function Sidebar({ className }: SidebarProps) {
     </Button>
   );
 
-  const getInitials = (name: string) =>
-    name.split(" ").map((part) => part[0]).join("").toUpperCase();
 
   return (
     <>
