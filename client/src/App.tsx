@@ -12,6 +12,7 @@ import OcrScan from "@/pages/ocr-scan";
 import Analytics from "@/pages/analytics";
 import AiTutor from "@/pages/ai-tutor";
 import StudentDirectory from "@/pages/student-directory";
+import Messages from "@/pages/messages";
 import { FirebaseAuthProvider, useFirebaseAuth } from "./contexts/firebase-auth-context";
 import { ThemeProvider } from "./contexts/theme-context";
 import "./blackboard-login.css";
@@ -24,10 +25,12 @@ import { FirebaseAuthDialog } from "@/components/auth/firebase-auth-dialog";
  * Layout wrapper that renders a sidebar and a main content area whose left margin is controlled by the CSS variable `--sidebar-width`.
  *
  * The main content is centered, constrained to a max width, and padded; children are rendered inside this container.
+ * When `fullWidth` is true, it removes the max-width and padding to allow edge-to-edge rendering.
  *
  * @param children - The content to display within the main layout container
+ * @param fullWidth - If true, bypasses the standard container constraints for full-bleed layouts
  */
-function AppLayout({ children }: { children: React.ReactNode }) {
+function AppLayout({ children, fullWidth = false }: { children: React.ReactNode, fullWidth?: boolean }) {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
@@ -35,18 +38,24 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         className="flex-1 transition-all duration-300 ease-in-out"
         style={{ marginLeft: 'var(--sidebar-width, 16rem)' }}
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-          {children}
-        </div>
+        {fullWidth ? (
+          <div className="w-full h-screen overflow-hidden">
+            {children}
+          </div>
+        ) : (
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+            {children}
+          </div>
+        )}
       </main>
     </div>
   );
 }
 
 // Memoize withLayout calls at module level to avoid re-creating wrapper components each render
-const withLayout = (Component: React.ComponentType) => {
+const withLayout = (Component: React.ComponentType, options?: { fullWidth?: boolean }) => {
   const WrappedComponent = (props: any) => (
-    <AppLayout>
+    <AppLayout fullWidth={options?.fullWidth}>
       <Component {...props} />
     </AppLayout>
   );
@@ -64,6 +73,7 @@ const WrappedOcrScan = withLayout(OcrScan);
 const WrappedAnalytics = withLayout(Analytics);
 const WrappedAiTutor = withLayout(AiTutor);
 const WrappedStudentDirectory = withLayout(StudentDirectory);
+const WrappedMessages = withLayout(Messages, { fullWidth: true });
 
 /**
  * Render application routes and handle authentication and loading states.
@@ -128,6 +138,7 @@ function Router() {
       <Route path="/analytics" component={WrappedAnalytics} />
       <Route path="/ai-tutor" component={WrappedAiTutor} />
       <Route path="/student-directory" component={WrappedStudentDirectory} />
+      <Route path="/messages" component={WrappedMessages} />
 
       {/* Fallback to 404 */}
       <Route component={NotFound} />
