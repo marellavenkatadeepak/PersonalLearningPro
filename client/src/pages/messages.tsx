@@ -25,7 +25,8 @@ import {
     School,
     BookOpen,
     MessageSquarePlus,
-    Search
+    Search,
+    Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -274,19 +275,19 @@ export default function Messages() {
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="flex h-screen w-full overflow-hidden bg-[#313338] text-white"
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="flex h-screen w-full overflow-hidden bg-gradient-to-br from-[#0f111a] via-[#161824] to-[#0a0a0f] text-white selection:bg-indigo-500/30"
         >
 
-            {/* PANEL 1: Far-Left Rail (Workspaces) */}
-            <div className="w-[72px] bg-[#1e1f22] flex-shrink-0 flex flex-col items-center py-3 gap-3 hidden md:flex">
+            {/* PANEL 1: Far-Left Rail (Workspaces) - Glassmorphic */}
+            <div className="w-[76px] bg-black/20 backdrop-blur-xl border-r border-white/5 flex-shrink-0 flex flex-col items-center py-4 gap-4 hidden md:flex z-30 shadow-2xl">
                 <div className="relative group flex items-center justify-center w-full">
                     <button
                         className={cn(
-                            "w-12 h-12 flex items-center justify-center transition-all duration-200 cursor-pointer overflow-hidden relative z-10",
+                            "w-12 h-12 flex items-center justify-center transition-all duration-300 cursor-pointer overflow-hidden relative z-10",
                             !activeChannel || activeChannel.type === "dm"
-                                ? "bg-primary text-primary-foreground rounded-[16px]"
-                                : "bg-[#313338] text-[#dbdee1] hover:bg-primary hover:text-primary-foreground rounded-[24px] hover:rounded-[16px]"
+                                ? "bg-indigo-500 text-white rounded-[16px] shadow-[0_0_20px_rgba(99,102,241,0.4)]"
+                                : "bg-white/5 text-white/70 hover:bg-indigo-500/80 hover:text-white rounded-[24px] hover:rounded-[16px]"
                         )}
                         onClick={() => setActiveChannel(null)}
                     >
@@ -294,34 +295,34 @@ export default function Messages() {
                     </button>
                     {(!activeChannel || activeChannel.type === "dm") ? (
                         <motion.div
-                            layoutId="active-nav-pill"
-                            className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-10 bg-white rounded-r-md"
+                            layoutId="active-nav-pill-workspace"
+                            className="absolute left-[2px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-indigo-400 rounded-r-full shadow-[0_0_10px_rgba(129,140,248,0.8)]"
                             transition={{ type: "spring", stiffness: 300, damping: 30 }}
                         />
                     ) : (
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-white rounded-r-md group-hover:h-5 transition-all duration-200" />
+                        <div className="absolute left-[2px] top-1/2 -translate-y-1/2 w-1.5 h-0 bg-white/30 rounded-r-full group-hover:h-5 transition-all duration-300" />
                     )}
                 </div>
 
-                <Separator className="w-8 h-[2px] bg-[#3f4147] my-1 rounded" />
+                <Separator className="w-8 h-[2px] bg-white/10 my-1 rounded-full" />
 
                 {workspaces.map((ws) => (
                     <div key={ws.id} className="relative group w-full flex items-center justify-center">
                         {ws.isActive ? (
                             <motion.div
-                                layoutId="active-nav-pill"
-                                className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-10 bg-white rounded-r-md"
+                                layoutId="active-nav-pill-workspace"
+                                className="absolute left-[2px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-indigo-400 rounded-r-full shadow-[0_0_10px_rgba(129,140,248,0.8)]"
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
                             />
                         ) : (
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-white rounded-r-md group-hover:h-5 transition-all duration-200" />
+                            <div className="absolute left-[2px] top-1/2 -translate-y-1/2 w-1.5 h-0 bg-white/30 rounded-r-full group-hover:h-5 transition-all duration-300" />
                         )}
                         <button
                             className={cn(
-                                "w-12 h-12 flex items-center justify-center transition-all duration-200 cursor-pointer overflow-hidden",
+                                "w-12 h-12 flex items-center justify-center transition-all duration-300 cursor-pointer overflow-hidden",
                                 ws.isActive
-                                    ? "bg-primary text-primary-foreground rounded-[16px]"
-                                    : "bg-[#313338] text-[#dbdee1] hover:bg-primary hover:text-primary-foreground rounded-[24px] hover:rounded-[16px]"
+                                    ? "bg-indigo-500 text-white rounded-[16px] shadow-[0_0_20px_rgba(99,102,241,0.4)]"
+                                    : "bg-white/5 text-white/70 hover:bg-indigo-500/80 hover:text-white rounded-[24px] hover:rounded-[16px]"
                             )}
                         >
                             {ws.icon}
@@ -329,69 +330,76 @@ export default function Messages() {
                     </div>
                 ))}
 
-                <button className="w-12 h-12 rounded-[24px] bg-[#313338] text-emerald-500 hover:bg-emerald-500 hover:text-white hover:rounded-[16px] flex items-center justify-center transition-all duration-200 mt-2">
+                <button className="w-12 h-12 rounded-[24px] bg-white/5 text-emerald-400 hover:bg-emerald-500 hover:text-white hover:rounded-[16px] flex items-center justify-center transition-all duration-300 mt-2 shadow-lg">
                     <span className="text-2xl font-light mb-1">+</span>
                 </button>
             </div>
 
-            {/* PANEL 2: Channel Sidebar */}
+            {/* PANEL 2: Channel Sidebar - Glassmorphic */}
             <div className={cn(
-                "bg-[#2b2d31] flex flex-col transition-all duration-300",
-                isMobileSidebarOpen ? "w-64 absolute z-20 h-full shadow-xl" : "hidden md:flex md:w-[240px]"
+                "bg-black/10 backdrop-blur-md border-r border-white/5 flex flex-col transition-all duration-300 z-20 shadow-xl",
+                isMobileSidebarOpen ? "w-72 absolute h-full left-0 border-r border-white/10 bg-[#161824]/95" : "hidden md:flex md:w-[260px]"
             )}>
                 {/* Search / Top Nav */}
-                <div className="h-12 border-b border-[#1f2023] flex items-center px-3 font-semibold shadow-sm justify-between">
-                    <button className="w-full bg-[#1e1f22] text-[#949ba4] text-sm text-left px-2 py-1.5 rounded-md hover:bg-[#313338] transition-colors">
+                <div className="h-14 border-b border-white/5 flex items-center px-4 font-semibold justify-between bg-black/20">
+                    <button className="w-full bg-white/5 border border-white/10 text-white/50 text-sm text-left px-3 py-1.5 rounded-lg hover:bg-white/10 hover:border-white/20 transition-all duration-200 shadow-inner">
                         Find or start a conversation
                     </button>
-                    <Button variant="ghost" size="icon" className="md:hidden ml-2" onClick={() => setIsMobileSidebarOpen(false)}>
+                    <Button variant="ghost" size="icon" className="md:hidden ml-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full" onClick={() => setIsMobileSidebarOpen(false)}>
                         <Menu className="h-4 w-4" />
                     </Button>
                 </div>
 
-                <ScrollArea className="flex-1 px-2 py-3">
+                <ScrollArea className="flex-1 px-3 py-4 custom-scrollbar">
                     {/* Friends Buttons */}
-                    <div className="space-y-0.5 mb-4">
+                    <div className="space-y-1 mb-6">
                         <button
                             onClick={() => setActiveChannel(null)}
                             className={cn(
-                                "w-full flex items-center gap-3 px-3 py-2 rounded-md text-[15px] transition-colors",
+                                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium transition-all duration-200 relative group overflow-hidden",
                                 activeChannel === null
-                                    ? "bg-[#404249] text-white font-medium"
-                                    : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
+                                    ? "text-white bg-indigo-500/20 border border-indigo-500/30"
+                                    : "text-white/60 hover:bg-white/5 hover:text-white border border-transparent"
                             )}
                         >
-                            <Users className="h-5 w-5" />
+                            {activeChannel === null && (
+                                <motion.div layoutId="active-channel-bg" className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-transparent -z-10" />
+                            )}
+                            <Users className={cn("h-5 w-5 transition-colors", activeChannel === null ? "text-indigo-400" : "text-white/50 group-hover:text-white/80")} />
                             Friends
                         </button>
-                        <button className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-[15px] text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1] transition-colors">
-                            <Settings className="h-5 w-5" />
+                        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[15px] font-medium text-white/60 hover:bg-white/5 hover:text-white border border-transparent transition-all duration-200 group">
+                            <Settings className="h-5 w-5 text-white/50 group-hover:text-white/80 transition-colors" />
                             Nitro
                         </button>
                     </div>
 
                     {isLoadingChannels ? (
-                        <div className="flex items-center justify-center h-20">
-                            <Loader2 className="h-5 w-5 animate-spin text-[#949ba4]" />
+                        <div className="flex items-center justify-center h-24">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-indigo-500 blur-xl opacity-20 rounded-full animate-pulse" />
+                                <Loader2 className="h-6 w-6 animate-spin text-indigo-400 relative z-10" />
+                            </div>
                         </div>
                     ) : (
                         Object.entries(groupedChannels).map(([subject, subjectChannels]) => (
-                            <div key={subject} className="mb-4">
-                                <div className="flex items-center justify-between px-2 mb-[2px] mt-4 group/header">
-                                    <h3 className="text-[11px] uppercase font-bold text-[#949ba4] hover:text-[#dbdee1] cursor-pointer tracking-wider">
+                            <div key={subject} className="mb-5">
+                                <div className="flex items-center justify-between px-2 mb-2 mt-4 group/header">
+                                    <h3 className="text-xs uppercase font-bold text-white/40 group-hover/header:text-white/70 cursor-pointer tracking-widest transition-colors flex items-center gap-2">
+                                        <span className="w-2 h-0.5 bg-white/20 rounded-full" />
                                         {subject}
                                     </h3>
                                     {subject === "Direct Messages" && (
                                         <button
                                             onClick={handleNewDM}
-                                            className="text-[#949ba4] hover:text-[#dbdee1] opacity-0 group-hover/header:opacity-100 transition-opacity"
+                                            className="text-white/40 hover:text-indigo-400 opacity-0 group-hover/header:opacity-100 transition-all transform hover:scale-110"
                                             title="Start new DM"
                                         >
                                             <MessageSquarePlus className="h-4 w-4" />
                                         </button>
                                     )}
                                 </div>
-                                <div className="space-y-[2px]">
+                                <div className="space-y-1">
                                     {subjectChannels.map((channel) => (
                                         <button
                                             key={channel.id}
@@ -400,13 +408,18 @@ export default function Messages() {
                                                 setIsMobileSidebarOpen(false);
                                             }}
                                             className={cn(
-                                                "w-full flex items-center gap-3 px-2 py-[6px] rounded-md text-[15px] transition-colors",
+                                                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14.5px] font-medium transition-all duration-200 relative group overflow-hidden",
                                                 activeChannel?.id === channel.id
-                                                    ? "bg-[#404249] text-white"
-                                                    : "text-[#949ba4] hover:bg-[#35373c] hover:text-[#dbdee1]"
+                                                    ? "text-white bg-indigo-500/20 border border-indigo-500/30"
+                                                    : "text-white/60 hover:bg-white/5 hover:text-white border border-transparent"
                                             )}
                                         >
-                                            {getChannelIcon(channel.type, channel.name)}
+                                            {activeChannel?.id === channel.id && (
+                                                <motion.div layoutId="active-channel-bg" className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-transparent -z-10" />
+                                            )}
+                                            <span className={cn("transition-colors", activeChannel?.id === channel.id ? "text-indigo-400" : "text-white/50 group-hover:text-white/80")}>
+                                                {getChannelIcon(channel.type, channel.name)}
+                                            </span>
                                             <span className="truncate">{channel.name}</span>
                                         </button>
                                     ))}
@@ -416,32 +429,35 @@ export default function Messages() {
                     )}
                 </ScrollArea>
 
-                {/* User Mini Profile */}
-                <div className="px-2 py-1.5 h-[52px] bg-[#232428] flex items-center gap-2 flex-shrink-0">
-                    <button className="flex items-center gap-2 hover:bg-[#3f4147] p-1 rounded-md flex-1 overflow-hidden transition-colors text-left">
-                        <Avatar className="h-8 w-8 rounded-full">
-                            <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
-                                {getInitials(currentUser.profile?.displayName || "User")}
-                            </AvatarFallback>
-                        </Avatar>
+                {/* User Mini Profile - Enhanced */}
+                <div className="px-3 py-3 h-[68px] bg-black/20 border-t border-white/5 flex items-center gap-3 flex-shrink-0 backdrop-blur-lg">
+                    <button className="flex items-center gap-3 hover:bg-white/5 p-1.5 -ml-1.5 rounded-xl flex-1 overflow-hidden transition-all duration-200 text-left group border border-transparent hover:border-white/10">
+                        <div className="relative">
+                            <Avatar className="h-9 w-9 rounded-full ring-2 ring-white/10 group-hover:ring-indigo-500/50 transition-all">
+                                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs font-bold">
+                                    {getInitials(currentUser.profile?.displayName || "User")}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#161824]"></div>
+                        </div>
                         <div className="flex-1 overflow-hidden">
-                            <p className="text-[13px] font-semibold text-white truncate leading-tight">{currentUser.profile?.displayName}</p>
-                            <p className="text-[11px] text-[#949ba4] truncate leading-tight group-hover:text-[#dbdee1]">Online</p>
+                            <p className="text-[14px] font-semibold text-white truncate leading-tight tracking-wide">{currentUser.profile?.displayName}</p>
+                            <p className="text-[12px] text-emerald-400 truncate leading-tight font-medium mt-0.5">Online</p>
                         </div>
                     </button>
-                    <div className="flex items-center gap-0.5">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#3f4147] rounded-md">
-                            <Volume2 className="h-5 w-5" />
+                    <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-white/50 hover:text-white hover:bg-white/10 rounded-xl transition-all">
+                            <Volume2 className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-[#949ba4] hover:text-[#dbdee1] hover:bg-[#3f4147] rounded-md">
-                            <Settings className="h-5 w-5" />
+                        <Button variant="ghost" size="icon" className="h-9 w-9 text-white/50 hover:text-white hover:bg-white/10 rounded-xl transition-all">
+                            <Settings className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
             </div>
 
             {/* PANEL 3: Main Content Area */}
-            <div className="flex-1 bg-[#313338] flex flex-col min-w-0 relative">
+            <div className="flex-1 bg-transparent flex flex-col min-w-0 relative z-10">
                 <AnimatePresence mode="wait">
                     {activeChannel === null ? (
                         /* FRIENDS VIEW */
@@ -456,57 +472,82 @@ export default function Messages() {
                             {/* Friends List & Add Friend Section */}
                             <div className="flex-1 flex flex-col min-w-0">
                                 {/* Top Nav (Friends Header) */}
-                                <div className="h-12 border-b border-[#1f2023] flex items-center px-4 shadow-sm z-10 shrink-0">
+                                <div className="h-14 border-b border-white/5 flex items-center px-6 justify-between shadow-sm z-10 shrink-0 bg-black/20 backdrop-blur-md">
                                     <div className="flex items-center gap-4">
-                                        <div className="flex items-center gap-2 text-white font-semibold">
-                                            <Users className="h-6 w-6 text-[#949ba4]" />
+                                        <div className="flex items-center gap-3 text-white font-semibold tracking-wide">
+                                            <div className="p-1.5 bg-indigo-500/20 rounded-lg">
+                                                <Users className="h-5 w-5 text-indigo-400" />
+                                            </div>
                                             <span>Friends</span>
                                         </div>
-                                        <Separator orientation="vertical" className="h-6 bg-[#3f4147]" />
-                                        <div className="flex items-center gap-4">
-                                            <button className="text-[#dbdee1] font-medium text-[15px] hover:text-white px-2 py-1 bg-[#404249] rounded-md transition-colors">Add Friend</button>
+                                        <Separator orientation="vertical" className="h-6 bg-white/10" />
+                                        <div className="flex items-center gap-2">
+                                            <button className="text-white font-medium text-[14px] px-4 py-1.5 bg-indigo-500 hover:bg-indigo-600 shadow-[0_0_15px_rgba(99,102,241,0.3)] rounded-lg transition-all duration-300">Add Friend</button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <ScrollArea className="flex-1 px-8 py-6">
-                                    <div className="max-w-[700px]">
-                                        <h2 className="text-white font-semibold mb-2">Add Friend</h2>
-                                        <p className="text-[#dbdee1] text-sm mb-4">You can add friends with their Discord username.</p>
+                                <ScrollArea className="flex-1 px-8 py-8 custom-scrollbar relative z-0">
+                                    <div className="max-w-[760px] mx-auto">
+                                        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
+                                            <h2 className="text-xl text-white font-bold mb-2 flex items-center gap-2">
+                                                Add Friend <Sparkles className="h-5 w-5 text-indigo-400" />
+                                            </h2>
+                                            <p className="text-white/50 text-sm mb-6">You can add friends with their unique username.</p>
 
-                                        <div className="relative flex items-center mb-8">
-                                            <input
-                                                type="text"
-                                                placeholder="You can add friends with their Discord username."
-                                                className="w-full bg-[#1e1f22] border border-[#1e1f22] hover:border-[#1e1f22] focus:border-[#5865F2] rounded-lg py-3 px-4 text-[#dbdee1] outline-none transition-colors"
-                                            />
-                                            <button className="absolute right-2 bg-[#5865F2] text-white text-sm font-medium px-4 py-1.5 rounded disabled:opacity-50 disabled:cursor-not-allowed">
-                                                Send Friend Request
-                                            </button>
-                                        </div>
-
-                                        <h2 className="text-white font-semibold mb-4">Other Places to Make Friends</h2>
-                                        <p className="text-[#dbdee1] text-sm mb-4">Don't have a username on hand? Check out our list of public servers that includes everything from gaming to cooking, music, anime and more.</p>
-
-                                        <button className="w-full flex items-center justify-between bg-[#2b2d31] hover:bg-[#35373c] p-4 rounded-lg transition-colors group">
-                                            <div className="flex items-center gap-3">
-                                                <div className="bg-[#23a559] p-2 rounded-lg">
-                                                    <Search className="h-5 w-5 text-white inline-block" />
-                                                </div>
-                                                <span className="text-white font-medium">Explore Discoverable Servers</span>
+                                            <div className="relative flex items-center mb-10 group">
+                                                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Enter username#0000"
+                                                    className="w-full bg-[#0f111a]/80 backdrop-blur-sm border border-white/10 group-hover:border-indigo-500/50 focus:border-indigo-500 rounded-xl py-4 px-5 text-white outline-none transition-all duration-300 relative z-10 placeholder:text-white/30"
+                                                />
+                                                <button className="absolute right-3 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-all duration-300 z-20 shadow-lg disabled:opacity-50">
+                                                    Send Request
+                                                </button>
                                             </div>
-                                            <Search className="h-5 w-5 text-[#949ba4] group-hover:text-[#dbdee1] opacity-50" />
-                                        </button>
+                                        </motion.div>
+
+                                        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
+                                            <h2 className="text-xl text-white font-bold mb-4">Discover Communities</h2>
+                                            <p className="text-white/50 text-sm mb-6">Join active student groups, study sessions, and clubs happening right now.</p>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {/* Bento Card 1 */}
+                                                <button className="flex flex-col bg-white/5 border border-white/10 hover:border-indigo-500/50 hover:bg-white/10 p-5 rounded-2xl transition-all duration-300 group text-left relative overflow-hidden">
+                                                    <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
+                                                    <div className="bg-emerald-500/20 p-2.5 rounded-xl w-fit mb-4 border border-emerald-500/30">
+                                                        <School className="h-6 w-6 text-emerald-400" />
+                                                    </div>
+                                                    <h3 className="text-white font-semibold text-lg mb-1">Global Study Hall</h3>
+                                                    <p className="text-white/50 text-sm">Join 1,200+ students studying right now.</p>
+                                                </button>
+
+                                                {/* Bento Card 2 */}
+                                                <button className="flex flex-col bg-white/5 border border-white/10 hover:border-purple-500/50 hover:bg-white/10 p-5 rounded-2xl transition-all duration-300 group text-left relative overflow-hidden">
+                                                    <div className="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all"></div>
+                                                    <div className="bg-purple-500/20 p-2.5 rounded-xl w-fit mb-4 border border-purple-500/30">
+                                                        <BookOpen className="h-6 w-6 text-purple-400" />
+                                                    </div>
+                                                    <h3 className="text-white font-semibold text-lg mb-1">Science & Tech</h3>
+                                                    <p className="text-white/50 text-sm">Discuss the latest breakthroughs.</p>
+                                                </button>
+                                            </div>
+                                        </motion.div>
                                     </div>
                                 </ScrollArea>
                             </div>
 
-                            {/* Active Now Sidebar */}
-                            <div className="w-[360px] border-l border-[#1f2023] hidden lg:flex flex-col p-4">
-                                <h3 className="font-bold text-white text-xl mb-4 text-[20px] leading-tight mt-2">Active Now</h3>
-                                <div className="flex flex-col items-center justify-center text-center mt-4">
-                                    <p className="text-white font-semibold mb-1">It's quiet for now...</p>
-                                    <p className="text-[#dbdee1] text-sm px-4">When a friend starts an activity—like playing a game or hanging out on voice—we'll show it here!</p>
+                            {/* Active Now Sidebar - Glassmorphic */}
+                            <div className="w-[360px] border-l border-white/5 hidden xl:flex flex-col p-6 bg-black/10 backdrop-blur-md">
+                                <h3 className="font-bold text-white text-xl mb-6 tracking-wide">Active Now</h3>
+                                <div className="flex flex-col items-center justify-center text-center mt-10 bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent"></div>
+                                    <div className="h-16 w-16 bg-white/10 rounded-full flex items-center justify-center mb-4 border border-white/10 shadow-inner">
+                                        <Users className="h-8 w-8 text-white/40" />
+                                    </div>
+                                    <p className="text-white font-semibold mb-2 relative z-10">It's quiet for now...</p>
+                                    <p className="text-white/50 text-sm relative z-10 leading-relaxed">When a friend starts an activity—like studying or jumping into voice—we'll show it right here!</p>
                                 </div>
                             </div>
                         </motion.div>
@@ -520,51 +561,56 @@ export default function Messages() {
                             transition={{ duration: 0.2 }}
                             className="flex flex-col flex-1 min-w-0 overflow-hidden"
                         >
-                            {/* Chat Header */}
-                            <div className="h-12 border-b border-[#1f2023] flex items-center px-4 justify-between shadow-sm z-10 bg-[#313338] shrink-0">
-                                <div className="flex items-center gap-2 overflow-hidden">
-                                    <Button variant="ghost" size="icon" className="md:hidden mr-1" onClick={() => setIsMobileSidebarOpen(true)}>
-                                        <Menu className="h-5 w-5 text-[#949ba4]" />
+                            {/* Chat Header - Glassmorphic */}
+                            <div className="h-14 flex items-center px-4 justify-between z-20 shrink-0 bg-black/20 backdrop-blur-md border-b border-white/5 shadow-sm">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <Button variant="ghost" size="icon" className="md:hidden mr-1 text-white/50 hover:text-white" onClick={() => setIsMobileSidebarOpen(true)}>
+                                        <Menu className="h-5 w-5" />
                                     </Button>
-                                    <span className="text-[#949ba4]">{getChannelIcon(activeChannel.type, activeChannel.name)}</span>
-                                    <span className="font-semibold text-white truncate">{activeChannel.name}</span>
+                                    <div className="p-1.5 bg-white/5 rounded-lg text-indigo-400">
+                                        {getChannelIcon(activeChannel.type, activeChannel.name)}
+                                    </div>
+                                    <span className="font-bold text-white tracking-wide truncate text-lg">{activeChannel.name}</span>
                                     {activeChannel.subject && (
                                         <>
-                                            <Separator orientation="vertical" className="h-5 mx-1 bg-[#3f4147]" />
-                                            <span className="text-[13px] text-[#dbdee1] truncate">
+                                            <Separator orientation="vertical" className="h-5 mx-2 bg-white/10" />
+                                            <span className="text-[14px] text-white/50 font-medium truncate pt-1">
                                                 {activeChannel.subject}
                                             </span>
                                         </>
                                     )}
                                 </div>
 
-                                <div className="flex items-center gap-1 text-[#949ba4]">
-                                    <div className="hidden sm:flex items-center bg-[#1e1f22] rounded-md px-2 py-1 h-7 text-xs mr-2">
-                                        <Search className="h-3.5 w-3.5 mr-1" />
-                                        <input type="text" placeholder="Search" className="bg-transparent text-white border-none outline-none w-24 focus:w-32 transition-all placeholder:text-[#949ba4]" />
+                                <div className="flex items-center gap-2 text-white/50">
+                                    <div className="hidden sm:flex items-center bg-black/30 border border-white/5 rounded-lg px-3 py-1.5 h-9 text-sm mr-2 transition-all focus-within:border-indigo-500/50 focus-within:ring-1 focus-within:ring-indigo-500/50">
+                                        <Search className="h-4 w-4 mr-2" />
+                                        <input type="text" placeholder="Search" className="bg-transparent text-white border-none outline-none w-32 focus:w-48 transition-all duration-300 placeholder:text-white/30" />
                                     </div>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 hidden md:flex hover:text-[#dbdee1] hover:bg-[#3f4147]">
+                                    <Button variant="ghost" size="icon" className="h-9 w-9 hidden md:flex hover:text-white hover:bg-white/10 rounded-lg transition-all">
                                         <Users className="h-5 w-5" />
                                     </Button>
                                 </div>
                             </div>
 
                             {/* Message Feed */}
-                            <ScrollArea className="flex-1 px-4 py-2 bg-[#313338]">
+                            <ScrollArea className="flex-1 px-4 py-4 bg-transparent z-10 custom-scrollbar relative">
                                 {isLoadingMessages ? (
-                                    <div className="flex items-center justify-center h-full pt-10">
-                                        <Loader2 className="h-6 w-6 animate-spin text-[#949ba4]" />
+                                    <div className="flex items-center justify-center h-full">
+                                        <div className="relative">
+                                            <div className="absolute inset-0 bg-indigo-500 blur-xl opacity-20 rounded-full animate-pulse" />
+                                            <Loader2 className="h-8 w-8 animate-spin text-indigo-400 relative z-10" />
+                                        </div>
                                     </div>
                                 ) : messages.length === 0 ? (
-                                    <div className="flex flex-col justify-end min-h-[100%] pb-8 pt-32 px-2">
-                                        <div className="w-[68px] h-[68px] rounded-full bg-[#404249] flex items-center justify-center mb-4">
-                                            <Hash className="h-10 w-10 text-white" />
+                                    <div className="flex flex-col justify-end min-h-[100%] pb-12 pt-32 px-4 max-w-3xl mx-auto">
+                                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center mb-6 shadow-xl backdrop-blur-md">
+                                            <Hash className="h-10 w-10 text-indigo-400" />
                                         </div>
-                                        <h2 className="text-[32px] font-bold mb-2 text-white">Welcome to #{activeChannel.name}!</h2>
-                                        <p className="text-[#dbdee1] mb-4">This is the start of the #{activeChannel.name} channel.</p>
+                                        <h2 className="text-4xl font-bold mb-3 text-white tracking-tight">Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">#{activeChannel.name}</span>!</h2>
+                                        <p className="text-white/60 text-lg mb-4">This is the start of the #{activeChannel.name} channel. Say hi!</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4 pb-4">
+                                    <div className="space-y-6 pb-24 max-w-5xl mx-auto">
                                         <AnimatePresence initial={false}>
                                             {messages.map((msg, idx) => {
                                                 const prevMsg = messages[idx - 1];
@@ -578,52 +624,53 @@ export default function Messages() {
                                                 return (
                                                     <motion.div
                                                         key={msg.id}
-                                                        initial={{ opacity: 0, y: 10 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        transition={{ duration: 0.2, ease: "easeOut" }}
-                                                        className={cn("group flex gap-4 px-1 hover:bg-[#2b2d31]/50 pt-[2px] pb-1 -mx-4 px-4 rounded-sm", showHeader ? "mt-4" : "mt-0")}
+                                                        layout
+                                                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                        transition={{ duration: 0.3, type: "spring", stiffness: 300, damping: 25 }}
+                                                        className={cn("group flex gap-4 px-2 hover:bg-white/[0.02] py-1 -mx-2 rounded-xl transition-colors duration-200", showHeader ? "mt-6" : "mt-1")}
                                                     >
                                                         {showHeader ? (
-                                                            <Avatar className="h-10 w-10 mt-0.5 shrink-0 cursor-pointer">
-                                                                <AvatarFallback className="bg-[#5865F2] text-white">
+                                                            <Avatar className="h-10 w-10 shrink-0 cursor-pointer ring-2 ring-white/10 hover:ring-indigo-500/50 transition-all shadow-md">
+                                                                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
                                                                     {getInitials(msg.senderName || "U")}
                                                                 </AvatarFallback>
                                                             </Avatar>
                                                         ) : (
-                                                            <div className="w-10 flex-shrink-0 text-right opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-[#949ba4] select-none mt-[2px]">
+                                                            <div className="w-10 flex-shrink-0 text-right opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-white/30 select-none mt-[2px] transition-opacity">
                                                                 {formatTime}
                                                             </div>
                                                         )}
 
                                                         <div className="flex-1 flex flex-col min-w-0">
                                                             {showHeader && (
-                                                                <div className="flex items-baseline gap-2 leading-none mb-1">
+                                                                <div className="flex items-baseline gap-2 leading-none mb-1.5">
                                                                     <span className={cn(
-                                                                        "font-medium hover:underline cursor-pointer",
-                                                                        msg.senderRole === "teacher" ? "text-amber-500" : "text-white"
+                                                                        "font-semibold hover:underline cursor-pointer text-[15px] tracking-wide",
+                                                                        msg.senderRole === "teacher" ? "text-amber-400" : "text-indigo-100"
                                                                     )}>
                                                                         {msg.senderName}
                                                                     </span>
-                                                                    <span className="text-xs text-[#949ba4] font-medium ml-1">
+                                                                    <span className="text-xs text-white/40 font-medium ml-1">
                                                                         {formatDate} {formatTime}
                                                                     </span>
                                                                 </div>
                                                             )}
 
-                                                            <div className="text-[#dbdee1] text-[15px] leading-relaxed break-words">
-                                                                <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-[1.375rem] prose-pre:p-0 prose-p:mb-0 last:prose-p:mb-0 text-[#dbdee1]">
+                                                            <div className="text-white/90 text-[15px] leading-relaxed break-words">
+                                                                <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-p:mb-0 last:prose-p:mb-0 text-white/90">
                                                                     <ReactMarkdown
                                                                         remarkPlugins={[remarkGfm, remarkMath]}
                                                                         rehypePlugins={[rehypeKatex]}
                                                                         components={{
-                                                                            p: ({ node, ...props }) => <p className="m-0 mb-0 last:mb-0 text-[#dbdee1]" {...props} />,
-                                                                            a: ({ node, ...props }) => <a className="text-[#00a8fc] hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
+                                                                            p: ({ node, ...props }) => <p className="m-0 mb-0 last:mb-0 text-white/90" {...props} />,
+                                                                            a: ({ node, ...props }) => <a className="text-indigo-400 hover:text-indigo-300 hover:underline transition-colors" target="_blank" rel="noopener noreferrer" {...props} />,
                                                                             code: ({ node, inline, ...props }: any) => (
                                                                                 inline ? (
-                                                                                    <code className="bg-[#1e1f22] text-[#dbdee1] px-1.5 py-0.5 rounded text-[14px] font-mono" {...props} />
+                                                                                    <code className="bg-white/10 text-indigo-200 px-1.5 py-0.5 rounded text-[14px] font-mono border border-white/5" {...props} />
                                                                                 ) : (
-                                                                                    <div className="bg-[#1e1f22] p-3 rounded-md overflow-x-auto my-2 border border-[#1f2023]">
-                                                                                        <code className="text-[13px] font-mono text-[#dbdee1]" {...props} />
+                                                                                    <div className="bg-black/40 backdrop-blur-md p-4 rounded-xl overflow-x-auto my-3 border border-white/10 shadow-inner">
+                                                                                        <code className="text-[13.5px] font-mono text-indigo-100" {...props} />
                                                                                     </div>
                                                                                 )
                                                                             )
@@ -643,38 +690,43 @@ export default function Messages() {
                                 )}
                             </ScrollArea>
 
-                            {/* Message Input Area */}
-                            <div className="px-4 pb-6 bg-[#313338] pt-1">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    ref={fileInputRef}
-                                    className="hidden"
-                                    onChange={handleFileChange}
-                                />
-                                <form onSubmit={handleSendMessage} className="bg-[#383a40] rounded-lg shrink-0 flex items-center p-1 relative">
-                                    <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-[#b5bac1] shrink-0 rounded-full hover:bg-transparent hover:text-[#dbdee1]" onClick={handleFileAttach}>
-                                        <div className="bg-[#dbdee1] text-[#383a40] rounded-full p-1 h-6 w-6 flex items-center justify-center">
-                                            <span className="font-bold leading-none mb-[2px]">+</span>
-                                        </div>
-                                    </Button>
-                                    <Input
-                                        value={inputValue}
-                                        onChange={(e) => setInputValue(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                        placeholder={`Message ${activeChannel.type === 'dm' ? '@' + activeChannel.name : '#' + activeChannel.name}`}
-                                        className="flex-1 bg-transparent border-none shadow-none focus-visible:ring-0 text-[15px] px-2 h-11 text-[#dbdee1] placeholder:text-[#949ba4]"
-                                        disabled={activeChannel.type === 'announcement' && currentUser.profile?.role !== 'teacher'}
+                            {/* Message Input Area - Floating Action Bar */}
+                            <div className="absolute bottom-6 left-0 right-0 px-6 z-20 pointer-events-none">
+                                <div className="max-w-4xl mx-auto pointer-events-auto">
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        onChange={handleFileChange}
                                     />
-                                    <div className="flex items-center gap-1 pr-2">
-                                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-[#b5bac1] rounded hover:bg-transparent hover:text-[#dbdee1]">
-                                            <Smile className="h-6 w-6" />
+                                    <form onSubmit={handleSendMessage} className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] flex items-center p-2 relative transition-all duration-300 focus-within:border-indigo-500/50 focus-within:shadow-[0_8px_32px_rgba(99,102,241,0.2)]">
+                                        <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-white/50 shrink-0 rounded-xl hover:bg-white/10 hover:text-white transition-all" onClick={handleFileAttach}>
+                                            <div className="bg-indigo-500/20 text-indigo-400 rounded-full p-1 h-7 w-7 flex items-center justify-center border border-indigo-500/30 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                                                <span className="font-bold leading-none mb-[2px]">+</span>
+                                            </div>
                                         </Button>
-                                    </div>
-                                </form>
-                                {activeChannel.type === 'announcement' && currentUser.profile?.role !== 'teacher' && (
-                                    <p className="text-xs text-center mt-2 text-[#949ba4]">Only teachers can send messages in this channel.</p>
-                                )}
+                                        <Input
+                                            value={inputValue}
+                                            onChange={(e) => setInputValue(e.target.value)}
+                                            onKeyDown={handleKeyDown}
+                                            placeholder={`Message ${activeChannel.type === 'dm' ? '@' + activeChannel.name : '#' + activeChannel.name}`}
+                                            className="flex-1 bg-transparent border-none shadow-none focus-visible:ring-0 text-[15px] px-3 h-12 text-white placeholder:text-white/40"
+                                            disabled={activeChannel.type === 'announcement' && currentUser.profile?.role !== 'teacher'}
+                                        />
+                                        <div className="flex items-center gap-2 pr-2">
+                                            <Button type="button" variant="ghost" size="icon" className="h-10 w-10 text-white/40 rounded-xl hover:bg-white/10 hover:text-indigo-400 transition-all">
+                                                <Smile className="h-5 w-5" />
+                                            </Button>
+                                            <Button type="submit" variant="ghost" size="icon" className="h-10 w-10 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 shadow-md transition-all group disabled:opacity-50">
+                                                <Send className="h-5 w-5 -ml-0.5 group-hover:translate-x-0.5 transition-transform" />
+                                            </Button>
+                                        </div>
+                                    </form>
+                                    {activeChannel.type === 'announcement' && currentUser.profile?.role !== 'teacher' && (
+                                        <p className="text-xs text-center mt-3 text-red-400/80 font-medium tracking-wide">Only teachers can send messages in this channel.</p>
+                                    )}
+                                </div>
                             </div>
                         </motion.div>
                     )}
