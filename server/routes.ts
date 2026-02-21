@@ -1,7 +1,7 @@
 import express, { type Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertTestSchema, insertQuestionSchema, insertTestAttemptSchema, insertAnswerSchema, insertAnalyticsSchema } from "@shared/schema";
+import { insertUserSchema, insertTestSchema, insertQuestionSchema, insertTestAttemptSchema, insertAnswerSchema, insertAnalyticsSchema, insertChannelSchema, insertMessageSchema } from "@shared/schema";
 import { z } from "zod";
 import { processOCRImage } from "./lib/tesseract";
 import { evaluateSubjectiveAnswer, aiChat, generateStudyPlan, analyzeTestPerformance } from "./lib/openai";
@@ -574,6 +574,145 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("AI chat error:", error);
       res.status(500).json({ message: "Failed to generate AI response" });
+    }
+  });
+
+  // Chat/Messaging routes
+  app.get("/api/channels/:class", async (req: Request, res: Response) => {
+    try {
+      const className = req.params.class;
+      const userId = req.query.userId as string;
+
+      if (!className) {
+        return res.status(400).json({ message: "Class name is required" });
+      }
+
+      const classChannels = await storage.getChannelsByClass(className);
+
+      let dmChannels: typeof classChannels = [];
+      if (userId) {
+        dmChannels = await storage.getDMChannelsForUser(userId);
+      }
+
+      const enrichedDMChannels = await Promise.all(
+        dmChannels.map(async (channel) => {
+          if (Array.isArray(channel.members)) {
+            const otherId = channel.members.find(id => id !== userId);
+            if (otherId) {
+              const otherUser = await storage.getUser(otherId);
+              if (otherUser) {
+                return { ...channel, name: otherUser.name };
+              }
+            }
+          }
+          return channel;
+        })
+      );
+
+      res.status(200).json([...classChannels, ...enrichedDMChannels]);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch channels" });
+    }
+  });
+
+  app.post("/api/channels/dm", async (req: Request, res: Response) => {
+    try {
+      const { userIds } = req.body;
+      if (!userIds || !Array.isArray(userIds) || userIds.length < 2) {
+        return res.status(400).json({ message: "Valid user IDs required" });
+      }
+
+      const existingDMs = await storage.getDMChannelsForUser(userIds[0]);
+      const existing = existingDMs.find(c =>
+        Array.isArray(c.members) &&
+        c.members.length === userIds.length &&
+        userIds.every(id => (c.members as string[]).includes(id))
+      );
+
+      if (existing) {
+        return res.status(200).json(existing);
+      }
+
+      const channelData = insertChannelSchema.parse({
+        name: `DM`,
+        type: "dm",
+        members: userIds,
+      });
+
+      const channel = await storage.createChannel(channelData);
+      res.status(201).json(channel);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid channel data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create DM channel" });
+    }
+  });
+
+  app.get("/api/messages/:channelId", async (req: Request, res: Response) => {
+    try {
+      const channelId = parseInt(req.params.channelId);
+      if (isNaN(channelId)) {
+        return res.status(400).json({ message: "Invalid channel ID" });
+      }
+
+      const messages = await storage.getMessagesByChannel(channelId);
+
+      // Enrich messages with sender info if missing
+      const enrichedMessages = await Promise.all(
+        messages.map(async (msg) => {
+          if (msg.senderName) return msg;
+          const sender = await storage.getUser(msg.senderId);
+          return {
+            ...msg,
+            senderName: sender?.name || "Unknown User",
+            senderRole: sender?.role || "student",
+          };
+        })
+      );
+
+      res.status(200).json(enrichedMessages);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/messages", async (req: Request, res: Response) => {
+    try {
+      // In a real app we'd verify auth here using the session or a token.
+
+      const messageData = insertMessageSchema.parse(req.body);
+      const message = await storage.createMessage(messageData);
+
+      let enrichedMessage = { ...message };
+      if (!enrichedMessage.senderName) {
+        const sender = await storage.getUser(message.senderId);
+        enrichedMessage = {
+          ...enrichedMessage,
+          senderName: sender?.name || "Unknown User",
+          senderRole: sender?.role || "student",
+        };
+      }
+
+      // Broadcast to all connected clients
+      const wss = req.app.get("wss");
+      if (wss) {
+        wss.clients.forEach((client: any) => {
+          if (client.readyState === 1 /* WebSocket.OPEN */) {
+            client.send(JSON.stringify({
+              type: "NEW_MESSAGE",
+              data: enrichedMessage
+            }));
+          }
+        });
+      }
+
+      res.status(201).json(enrichedMessage);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid message data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to send message" });
     }
   });
 
