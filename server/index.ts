@@ -1,20 +1,28 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage";
 import { WebSocketServer, WebSocket } from "ws";
+import { connectMongoDB } from "./db";
+import { initCassandra } from "./lib/cassandra";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Enforce SESSION_SECRET in production
+// Initialize Databases
+connectMongoDB();
+initCassandra();
+
+// Set up session middleware
 if (!process.env.SESSION_SECRET && process.env.NODE_ENV === 'production') {
   throw new Error("SESSION_SECRET environment variable is required in production. Set it in your .env file.");
 }
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'dev-only-insecure-secret',
+  secret: process.env.SESSION_SECRET || 'master-plan-ai-secret-key',
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -95,7 +103,7 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
+  // ALWAYS serve the app on port 5001
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5001;
