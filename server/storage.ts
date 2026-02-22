@@ -5,11 +5,13 @@ import {
   type TestAttempt, type InsertTestAttempt,
   type Answer, type InsertAnswer,
   type Analytics, type InsertAnalytics,
+  type Workspace, type InsertWorkspace,
   type Channel, type InsertChannel,
-  type Message, type InsertMessage
+  type Message, type InsertMessage,
 } from "@shared/schema";
 import {
-  MongoUser, MongoTest, MongoQuestion, MongoTestAttempt, MongoAnswer, MongoAnalytics, MongoChannel,
+  MongoUser, MongoTest, MongoQuestion, MongoTestAttempt, MongoAnswer, MongoAnalytics,
+  MongoWorkspace, MongoChannel, MongoMessage,
   getNextSequenceValue
 } from "@shared/mongo-schema";
 import { getCassandraClient } from "./lib/cassandra";
@@ -59,15 +61,25 @@ export interface IStorage {
   getAnalyticsByUser(userId: number): Promise<Analytics[]>;
   getAnalyticsByTest(testId: number): Promise<Analytics[]>;
 
+  // Workspace operations
+  createWorkspace(workspace: InsertWorkspace): Promise<Workspace>;
+  getWorkspace(id: number): Promise<Workspace | undefined>;
+  getWorkspaces(userId: number): Promise<Workspace[]>;
+  addMemberToWorkspace(workspaceId: number, userId: number): Promise<Workspace | undefined>;
+  removeMemberFromWorkspace(workspaceId: number, userId: number): Promise<Workspace | undefined>;
+
   // Channel operations
   createChannel(channel: InsertChannel): Promise<Channel>;
   getChannel(id: number): Promise<Channel | undefined>;
-  getChannelsByClass(className: string): Promise<Channel[]>;
-  getDMChannelsForUser(userId: string): Promise<Channel[]>;
+  getChannelsByWorkspace(workspaceId: number): Promise<Channel[]>;
 
   // Message operations
   createMessage(message: InsertMessage): Promise<Message>;
-  getMessagesByChannel(channelId: number): Promise<Message[]>;
+  getMessagesByChannel(channelId: number, limit?: number, before?: number): Promise<Message[]>;
+  deleteMessage(id: number): Promise<boolean>;
+  pinMessage(channelId: number, messageId: number): Promise<Channel | undefined>;
+  unpinMessage(channelId: number, messageId: number): Promise<Channel | undefined>;
+  getPinnedMessages(channelId: number): Promise<Message[]>;
 }
 
 export class MongoStorage implements IStorage {
@@ -243,59 +255,112 @@ export class MongoStorage implements IStorage {
     return results.map((r: any) => this.mapMongoDoc<Analytics>(r));
   }
 
-  // Channel operations
+  // ─── Workspace operations ─────────────────────────────────────────────────
+
+  async createWorkspace(workspace: InsertWorkspace): Promise<Workspace> {
+    const id = await getNextSequenceValue("workspace_id");
+    const members = Array.from(new Set([workspace.ownerId, ...(workspace.members || [])]));
+    const newWorkspace = new MongoWorkspace({ ...workspace, members, id });
+    await newWorkspace.save();
+    return this.mapMongoDoc<Workspace>(newWorkspace);
+  }
+
+  async getWorkspace(id: number): Promise<Workspace | undefined> {
+    const ws = await MongoWorkspace.findOne({ id });
+    return ws ? this.mapMongoDoc<Workspace>(ws) : undefined;
+  }
+
+  async getWorkspaces(userId: number): Promise<Workspace[]> {
+    const workspaces = await MongoWorkspace.find({ members: userId });
+    return workspaces.map((w: any) => this.mapMongoDoc<Workspace>(w));
+  }
+
+  async addMemberToWorkspace(workspaceId: number, userId: number): Promise<Workspace | undefined> {
+    const ws = await MongoWorkspace.findOneAndUpdate(
+      { id: workspaceId },
+      { $addToSet: { members: userId } },
+      { new: true }
+    );
+    return ws ? this.mapMongoDoc<Workspace>(ws) : undefined;
+  }
+
+  async removeMemberFromWorkspace(workspaceId: number, userId: number): Promise<Workspace | undefined> {
+    const ws = await MongoWorkspace.findOneAndUpdate(
+      { id: workspaceId },
+      { $pull: { members: userId } },
+      { new: true }
+    );
+    return ws ? this.mapMongoDoc<Workspace>(ws) : undefined;
+  }
+
+  // ─── Channel operations ──────────────────────────────────────────────────
+
   async createChannel(channel: InsertChannel): Promise<Channel> {
     const id = await getNextSequenceValue("channel_id");
-    const newChannel = new MongoChannel({ ...channel, id });
+    const newChannel = new MongoChannel({ ...channel, pinnedMessages: [], id });
     await newChannel.save();
     return this.mapMongoDoc<Channel>(newChannel);
   }
 
   async getChannel(id: number): Promise<Channel | undefined> {
-    const channel = await MongoChannel.findOne({ id });
-    return this.mapMongoDoc<Channel>(channel);
+    const ch = await MongoChannel.findOne({ id });
+    return ch ? this.mapMongoDoc<Channel>(ch) : undefined;
   }
 
-  async getChannelsByClass(className: string): Promise<Channel[]> {
-    const channels = await MongoChannel.find({ class: className });
+  async getChannelsByWorkspace(workspaceId: number): Promise<Channel[]> {
+    const channels = await MongoChannel.find({ workspaceId }).sort({ createdAt: 1 });
     return channels.map((c: any) => this.mapMongoDoc<Channel>(c));
   }
 
-  async getDMChannelsForUser(userId: string): Promise<Channel[]> {
-    const channels = await MongoChannel.find({ type: "dm", members: userId });
-    return channels.map((c: any) => this.mapMongoDoc<Channel>(c));
-  }
+  // ─── Message operations ──────────────────────────────────────────────────
 
-  // Message operations
   async createMessage(message: InsertMessage): Promise<Message> {
-    const client = getCassandraClient();
-    if (!client) throw new Error("Cassandra client not initialized");
-
-    const messageId = Snowflake.generate();
-    const query = 'INSERT INTO messages (channel_id, message_id, author_id, content, attachments, timestamp) VALUES (?, ?, ?, ?, ?, ?)';
-    const params = [message.channelId.toString(), messageId, message.senderId, message.content, [], new Date()];
-    await client.execute(query, params, { prepare: true });
-
-    return { ...message, id: messageId.toString(), timestamp: params[5] };
+    const id = await getNextSequenceValue("message_id");
+    const newMessage = new MongoMessage({ ...message, isPinned: false, id });
+    await newMessage.save();
+    return this.mapMongoDoc<Message>(newMessage);
   }
 
-  async getMessagesByChannel(channelId: number): Promise<Message[]> {
-    const client = getCassandraClient();
-    if (!client) throw new Error("Cassandra client not initialized");
+  async getMessagesByChannel(channelId: number, limit = 50, before?: number): Promise<Message[]> {
+    const filter: any = { channelId };
+    if (before !== undefined) {
+      filter.id = { $lt: before };
+    }
+    const messages = await MongoMessage.find(filter)
+      .sort({ id: -1 })
+      .limit(limit);
+    // Return in ascending order so clients render oldest→newest
+    return messages.reverse().map((m: any) => this.mapMongoDoc<Message>(m));
+  }
 
-    const query = 'SELECT * FROM messages WHERE channel_id = ?';
-    const result = await client.execute(query, [channelId.toString()], { prepare: true });
+  async deleteMessage(id: number): Promise<boolean> {
+    const result = await MongoMessage.deleteOne({ id });
+    return result.deletedCount > 0;
+  }
 
-    return result.rows.map(row => ({
-      id: row.message_id.toString(),
-      channelId: parseInt(row.channel_id),
-      senderId: row.author_id.toString(),
-      content: row.content,
-      timestamp: row.timestamp,
-      senderName: null,
-      senderRole: null,
-      avatar: null
-    }));
+  async pinMessage(channelId: number, messageId: number): Promise<Channel | undefined> {
+    await MongoMessage.findOneAndUpdate({ id: messageId }, { isPinned: true });
+    const ch = await MongoChannel.findOneAndUpdate(
+      { id: channelId },
+      { $addToSet: { pinnedMessages: messageId } },
+      { new: true }
+    );
+    return ch ? this.mapMongoDoc<Channel>(ch) : undefined;
+  }
+
+  async unpinMessage(channelId: number, messageId: number): Promise<Channel | undefined> {
+    await MongoMessage.findOneAndUpdate({ id: messageId }, { isPinned: false });
+    const ch = await MongoChannel.findOneAndUpdate(
+      { id: channelId },
+      { $pull: { pinnedMessages: messageId } },
+      { new: true }
+    );
+    return ch ? this.mapMongoDoc<Channel>(ch) : undefined;
+  }
+
+  async getPinnedMessages(channelId: number): Promise<Message[]> {
+    const messages = await MongoMessage.find({ channelId, isPinned: true }).sort({ id: 1 });
+    return messages.map((m: any) => this.mapMongoDoc<Message>(m));
   }
 }
 
