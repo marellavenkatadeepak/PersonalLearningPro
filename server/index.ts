@@ -13,6 +13,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // Initialize Databases
 connectMongoDB();
+initCassandra();
 
 // Set up session middleware
 if (!process.env.SESSION_SECRET && process.env.NODE_ENV === 'production') {
