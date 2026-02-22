@@ -4,6 +4,7 @@ import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage";
+import { WebSocketServer, WebSocket } from "ws";
 import { connectMongoDB } from "./db";
 import { setupChatWebSocket } from "./chat-ws";
 

@@ -14,6 +14,8 @@ import {
   MongoWorkspace, MongoChannel, MongoMessage,
   getNextSequenceValue
 } from "@shared/mongo-schema";
+import { getCassandraClient } from "./lib/cassandra";
+import { Snowflake } from "./lib/snowflake";
 import session from "express-session";
 import MongoStore from "connect-mongo";
 
@@ -21,7 +23,7 @@ export interface IStorage {
   // Session store
   sessionStore: session.Store;
   // User operations
-  getUser(id: number): Promise<User | undefined>;
+  getUser(id: number | string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
@@ -98,8 +100,8 @@ export class MongoStorage implements IStorage {
   }
 
   // User operations
-  async getUser(id: number): Promise<User | undefined> {
-    const user = await MongoUser.findOne({ id });
+  async getUser(id: number | string): Promise<User | undefined> {
+    const user = await MongoUser.findOne({ id: id as number });
     return this.mapMongoDoc<User>(user);
   }
 
