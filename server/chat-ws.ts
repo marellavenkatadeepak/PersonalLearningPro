@@ -194,11 +194,18 @@ export function setupChatWebSocket(httpServer: Server, sessionStore: Store) {
                         return;
                     }
 
-                    // Verify user is a workspace member
-                    const workspace = await storage.getWorkspace(channel.workspaceId);
-                    if (!workspace || !workspace.members.includes(userId)) {
-                        send(ws, { type: "error", message: "You are not a member of this workspace." });
-                        return;
+                    // Verify access
+                    if (channel.type === "dm") {
+                        if (!channel.name.includes(userId.toString())) {
+                            send(ws, { type: "error", message: "Access denied to this DM." });
+                            return;
+                        }
+                    } else {
+                        const workspace = await storage.getWorkspace(channel.workspaceId!);
+                        if (!workspace || !workspace.members.includes(userId)) {
+                            send(ws, { type: "error", message: "You are not a member of this workspace." });
+                            return;
+                        }
                     }
 
                     subscribeToChannel(ws, channelId);
