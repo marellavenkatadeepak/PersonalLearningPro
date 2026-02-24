@@ -826,6 +826,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/users/me/dms — Get all DMs for the current user, enriched with partner info
+  app.get("/api/users/me/dms", async (req: Request, res: Response) => {
+    try {
+      if (!req.session?.userId) return res.status(401).json({ message: "Not authenticated" });
+
+      const currentUserId = req.session.userId;
+      const dms = await storage.getDMsByUser(currentUserId);
+
+      const enrichedDms = await Promise.all(dms.map(async (dm) => {
+        // dm.name is 'dm_ID1_ID2'
+        const parts = dm.name.split('_');
+        if (parts.length === 3) {
+          const id1 = parseInt(parts[1]);
+          const id2 = parseInt(parts[2]);
+          const partnerId = id1 === currentUserId ? id2 : id1;
+
+          const partner = await storage.getUser(partnerId);
+          if (partner) {
+            return {
+              ...dm,
+              partner: {
+                id: partner.id,
+                username: partner.username,
+                avatar: partner.avatar,
+                role: partner.role
+              }
+            };
+          }
+        }
+        return dm;
+      }));
+
+      return res.status(200).json(enrichedDms);
+    } catch {
+      return res.status(500).json({ message: "Failed to fetch DMs" });
+    }
+  });
+
   // DELETE /api/messages/:id — Delete a message (author or teacher)
   app.delete("/api/messages/:id", async (req: Request, res: Response) => {
     try {
