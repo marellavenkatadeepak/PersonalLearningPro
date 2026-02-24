@@ -113,6 +113,7 @@ export default function Messages() {
 
     const [channels, setChannels] = useState<Channel[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
+    const [dms, setDms] = useState<any[]>([]);
     const [activeChannel, setActiveChannel] = useState<Channel | null>(null);
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
     const [ws, setWs] = useState<WebSocket | null>(null);
@@ -126,6 +127,7 @@ export default function Messages() {
 
     const [inputValue, setInputValue] = useState("");
     const [isLoadingChannels, setIsLoadingChannels] = useState(true);
+    const [isLoadingDms, setIsLoadingDms] = useState(true);
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [sidebarSearchQuery, setSidebarSearchQuery] = useState("");
@@ -172,8 +174,26 @@ export default function Messages() {
                 // Fetch Channels
                 const chRes = await apiRequest("GET", `/api/channels/query/${encodeURIComponent(userClass)}`);
                 const chData: Channel[] = await chRes.json();
-                setChannels(chData);
-                if (chData.length > 0 && !activeChannel) setActiveChannel(chData[0]);
+
+                // Fetch unread counts for each channel
+                const channelsWithUnread = await Promise.all(chData.map(async (c) => {
+                    try {
+                        const unreadRes = await apiRequest("GET", `/api/channels/${c.id}/unread`);
+                        if (unreadRes.ok) {
+                            const unreadData = await unreadRes.json();
+                            return { ...c, unreadCount: unreadData.unreadCount };
+                        }
+                    } catch (e) { console.error(e); }
+                    return c;
+                }));
+
+                setChannels(channelsWithUnread);
+                if (channelsWithUnread.length > 0 && !activeChannel) setActiveChannel(channelsWithUnread[0]);
+                // Fetch DMs
+                const dmsRes = await apiRequest("GET", "/api/users/me/dms");
+                const dmsData = await dmsRes.json();
+                setDms(dmsData);
+                setIsLoadingDms(false);
             } catch (error) {
                 console.error("Failed to fetch messaging data:", error);
             } finally {
@@ -302,6 +322,7 @@ export default function Messages() {
                         // If we are in the channel, mark as read
                         if (activeChannel && newMsg.channelId === activeChannel.id && currentUser.profile?.uid) {
                             socket?.send(JSON.stringify({ type: "mark_read", messageId: newMsg.id, channelId: newMsg.channelId }));
+                            apiRequest("POST", `/api/messages/${newMsg.id}/read`, { channelId: newMsg.channelId }).catch(console.error);
                         }
                     } else if (wsMessage.type === "message_read") {
                         const { messageId, userId } = wsMessage;
@@ -427,6 +448,22 @@ export default function Messages() {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSendMessage();
+        }
+    };
+
+    const handleDeleteMessage = async (messageId: number | string) => {
+        // Optimistically remove from UI
+        setMessages(prev => prev.filter(m => m.id !== messageId));
+
+        try {
+            const res = await apiRequest("DELETE", `/api/messages/${messageId}`);
+            if (!res.ok) {
+                // Revert or show error if failed
+                toast({ title: "Failed to delete message", variant: "destructive" });
+            }
+        } catch (error) {
+            console.error("Failed to delete message:", error);
+            toast({ title: "Failed to delete message", variant: "destructive" });
         }
     };
 
@@ -758,6 +795,7 @@ export default function Messages() {
                                                 setChannels(prev => prev.map(c =>
                                                     c.id === channel.id ? { ...c, unreadCount: 0 } : c
                                                 ));
+                                                // Also mark latest message read if it exists here
                                             }}
                                             className={cn(
                                                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14.5px] font-medium transition-all duration-200 relative group overflow-hidden",
@@ -825,7 +863,12 @@ export default function Messages() {
                 <AnimatePresence mode="wait">
                     {activeChannel === null ? (
                         /* FRIENDS VIEW (Extracted Component) */
-                        <MessagingHome currentUser={currentUser} />
+                        <MessagingHome
+                            currentUser={currentUser}
+                            dms={dms}
+                            onSelectDm={(dm) => setActiveChannel(dm)}
+                            isLoadingDms={isLoadingDms}
+                        />
                     ) : (
                         /* CHAT VIEW (Preserved from original but styled) */
                         <motion.div
@@ -1069,7 +1112,7 @@ export default function Messages() {
                                                             )}
                                                             <ContextMenuSeparator className="bg-white/10 my-1" />
                                                             {isOwn || currentUser.profile?.role === 'teacher' ? (
-                                                                <ContextMenuItem className="cursor-pointer hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 focus:text-red-400 py-2.5">
+                                                                <ContextMenuItem onClick={() => handleDeleteMessage(msg.id)} className="cursor-pointer hover:bg-red-500/20 focus:bg-red-500/20 text-red-400 focus:text-red-400 py-2.5">
                                                                     <span className="font-medium">Delete</span>
                                                                     <span className="ml-auto text-xs opacity-60 tracking-widest mr-1">⌘⌫</span>
                                                                 </ContextMenuItem>
