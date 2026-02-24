@@ -978,6 +978,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/channels/:id/unread — Get unread count for a channel
+  app.get("/api/channels/:id/unread", async (req: Request, res: Response) => {
+    try {
+      if (!req.session?.userId) return res.status(401).json({ message: "Not authenticated" });
+      const channelId = parseInt(req.params.id);
+
+      const channel = await storage.getChannel(channelId);
+      if (!channel) return res.status(404).json({ message: "Channel not found" });
+
+      // Count unread in last 50 messages
+      const messages = await storage.getMessagesByChannel(channelId, 50);
+      const unreadCount = messages.filter(m => !m.readBy?.includes(req.session!.userId)).length;
+
+      return res.status(200).json({ unreadCount });
+    } catch {
+      return res.status(500).json({ message: "Failed to fetch unread count" });
+    }
+  });
+
   // POST /api/messages/:id/grade — Grade homework (teachers only)
   app.post("/api/messages/:id/grade", async (req: Request, res: Response) => {
     try {
