@@ -13,12 +13,6 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
 // Mock Data
-const MOCK_ONLINE_FRIENDS = [
-    { id: 1, name: "Sarah Jenkins", activity: "Studying Calculus", isOnline: true, role: "student" },
-    { id: 2, name: "David Kim", activity: "In Global Study Hall", isOnline: true, role: "student" },
-    { id: 3, name: "Elena Rodriguez", activity: "Online", isOnline: true, role: "teacher" },
-];
-
 const MOCK_COMMUNITIES = [
     { id: 1, name: "Global Study Hall", members: "1.2k", online: 340, icon: School, color: "emerald", desc: "Open 24/7 for focused sessions." },
     { id: 2, name: "Science & Tech", members: 840, online: 120, icon: BookOpen, color: "purple", desc: "Discuss the latest breakthroughs." },
@@ -37,9 +31,12 @@ const MOCK_REQUESTS = [
 
 interface MessagingHomeProps {
     currentUser: any;
+    dms: any[];
+    onSelectDm: (dm: any) => void;
+    isLoadingDms?: boolean;
 }
 
-export function MessagingHome({ currentUser }: MessagingHomeProps) {
+export function MessagingHome({ currentUser, dms, onSelectDm, isLoadingDms }: MessagingHomeProps) {
     return (
         <motion.div
             key="friends-view"
@@ -269,34 +266,46 @@ export function MessagingHome({ currentUser }: MessagingHomeProps) {
                         </div>
                     )}
 
-                    {/* Active Friends */}
+                    {/* Direct Messages */}
                     <div>
-                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-white/40 mb-4 px-1">Online — {MOCK_ONLINE_FRIENDS.length}</h3>
+                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-white/40 mb-4 px-1">Recent Direct Messages</h3>
 
-                        {MOCK_ONLINE_FRIENDS.length > 0 ? (
+                        {isLoadingDms ? (
+                            <div className="flex justify-center p-4">
+                                <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        ) : dms && dms.length > 0 ? (
                             <div className="space-y-1">
-                                {MOCK_ONLINE_FRIENDS.map(friend => (
-                                    <button key={friend.id} className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/5 transition-all group text-left">
-                                        <div className="relative">
-                                            <Avatar className="h-10 w-10 ring-1 ring-white/10 group-hover:ring-indigo-500/50 transition-all">
-                                                <AvatarFallback className="bg-black/40 text-white/70">{getInitials(friend.name)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#161824] shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div>
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-baseline mb-0.5">
-                                                <p className="text-[14px] font-semibold text-white/90 group-hover:text-white truncate">{friend.name}</p>
+                                {dms.map(dm => {
+                                    const partner = dm.partner || { username: 'Unknown User', avatar: null, role: 'student' };
+                                    return (
+                                        <button key={dm.id} onClick={() => onSelectDm(dm)} className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/5 transition-all group text-left">
+                                            <div className="relative">
+                                                <Avatar className="h-10 w-10 ring-1 ring-white/10 group-hover:ring-indigo-500/50 transition-all">
+                                                    {partner.avatar ? (
+                                                        <img src={partner.avatar} alt={partner.username} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <AvatarFallback className="bg-black/40 text-white/70">{getInitials(partner.username)}</AvatarFallback>
+                                                    )}
+                                                </Avatar>
+                                                <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#161824] shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div>
                                             </div>
-                                            <p className="text-[12px] text-white/50 truncate flex items-center gap-1.5 group-hover:text-white/70 transition-colors">
-                                                {friend.activity.includes("Study") ? <School className="h-3 w-3 text-indigo-400" /> : null}
-                                                {friend.activity}
-                                            </p>
-                                        </div>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 p-1.5 rounded-lg border border-white/5 text-white/50 hover:text-white hover:bg-white/10 backdrop-blur-md">
-                                            <MessageSquarePlus className="h-4 w-4" />
-                                        </div>
-                                    </button>
-                                ))}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-baseline mb-0.5">
+                                                    <p className="text-[14px] font-semibold text-white/90 group-hover:text-white truncate">{partner.username}</p>
+                                                </div>
+                                                <p className="text-[12px] text-white/50 truncate flex items-center gap-1.5 group-hover:text-white/70 transition-colors">
+                                                    {dm.lastMessage || 'Start texting...'}
+                                                </p>
+                                            </div>
+                                            {(dm.unreadCount > 0) && (
+                                                <div className="bg-indigo-500 text-white text-[10px] font-bold h-5 min-w-[20px] px-1.5 rounded-full flex items-center justify-center shadow-[0_0_10px_rgba(99,102,241,0.5)] shrink-0 z-10 mx-1">
+                                                    {dm.unreadCount > 99 ? '99+' : dm.unreadCount}
+                                                </div>
+                                            )}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center text-center mt-6 bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden">
@@ -305,7 +314,7 @@ export function MessagingHome({ currentUser }: MessagingHomeProps) {
                                     <Users className="h-6 w-6 text-white/40" />
                                 </div>
                                 <p className="text-white font-semibold mb-1 relative z-10">It's quiet for now...</p>
-                                <p className="text-white/50 text-xs relative z-10 leading-relaxed">When a friend starts an activity, we'll show it right here!</p>
+                                <p className="text-white/50 text-xs relative z-10 leading-relaxed">When you start a DM, it'll show up here!</p>
                             </div>
                         )}
                     </div>
