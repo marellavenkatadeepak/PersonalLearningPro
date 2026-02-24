@@ -5,6 +5,7 @@ import { insertUserSchema, insertTestSchema, insertQuestionSchema, insertTestAtt
 import { z } from "zod";
 import { processOCRImage } from "./lib/tesseract";
 import { evaluateSubjectiveAnswer, aiChat, generateStudyPlan, analyzeTestPerformance } from "./lib/openai";
+import { upload, diskPathToUrl } from "./lib/upload";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
@@ -1003,32 +1004,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // POST /api/upload — Functional file upload (base64)
-  app.post("/api/upload", async (req: Request, res: Response) => {
-    try {
-      if (!req.session?.userId) return res.status(401).json({ message: "Not authenticated" });
+  // POST /api/upload — Real multipart file upload (multer disk storage)
+  app.post(
+    "/api/upload",
+    (req: Request, res: Response, next) => {
+      // Auth guard before multer processes the body
+      if (!req.session?.userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+      next();
+    },
+    upload.single("file"),
+    (req: Request, res: Response) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ message: "No file provided. Send a multipart/form-data request with field name 'file'." });
+        }
 
-      const { name, type, data } = req.body;
+        const url = diskPathToUrl(req.file.path);
+        console.log(`[upload] User ${req.session!.userId} uploaded ${req.file.originalname} → ${url}`);
 
-      // In a real production app, we would use multer and store on S3/Cloudinary/Local disk.
-      // For this implementation, we'll return a mock URL but log the "upload" action.
-      // If 'data' is provided (base64), we could potentially save it to a public folder.
-
-      console.log(`[upload] User ${req.session.userId} uploading ${name} (${type})`);
-
-      // Mocking a successful upload with a random unsplash image tag if it's an image
-      const mockUrl = type === 'image'
-        ? `https://images.unsplash.com/photo-1517673132405-a56a62b18caf?auto=format&fit=crop&q=80&w=800&sig=${Date.now()}`
-        : "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
-
-      return res.status(200).json({
-        url: mockUrl,
-        name: name || "uploaded_file"
-      });
-    } catch {
-      return res.status(500).json({ message: "Upload failed" });
+        return res.status(200).json({
+          url,
+          name: req.file.originalname,
+          size: req.file.size,
+          mimeType: req.file.mimetype,
+        });
+      } catch {
+        return res.status(500).json({ message: "Upload failed" });
+      }
     }
-  });
+  );
 
   const httpServer = createServer(app);
   return httpServer;
