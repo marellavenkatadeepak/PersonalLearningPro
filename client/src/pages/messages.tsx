@@ -3,15 +3,12 @@ import { useFirebaseAuth } from "@/contexts/firebase-auth-context";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { cn, getInitials } from "@/lib/utils";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Virtuoso } from 'react-virtuoso';
 import { MessagingHome } from "@/components/messaging/messaging-home";
 import { ChannelSidebar } from "@/components/messaging/channel-sidebar";
+import { MessageBubble } from "@/components/messaging/message-bubble";
+import { Composer } from "@/components/messaging/composer";
 import {
     MessageSquare,
     Hash,
@@ -42,13 +39,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import {
-    ContextMenu,
-    ContextMenuContent,
-    ContextMenuItem,
-    ContextMenuTrigger,
-    ContextMenuSeparator,
-} from "@/components/ui/context-menu";
+// Removed context menu imports, handled in MessageBubble
 import {
     Dialog,
     DialogContent,
@@ -419,7 +410,7 @@ export default function Messages() {
     };
 
     return (
-        <div className="flex h-screen w-full overflow-hidden bg-[#313338] text-[#dbdee1]">
+        <div className="flex h-screen w-full overflow-hidden bg-[#F5F7FB] text-gray-800">
             {/* Offline Banner */}
             {isOffline && (
                 <div className="absolute top-0 left-0 right-0 bg-red-600 text-white text-[11px] text-center py-1 font-semibold z-[100] uppercase tracking-widest">
@@ -522,10 +513,10 @@ export default function Messages() {
                             className="flex flex-col flex-1 min-w-0 overflow-hidden h-full"
                         >
                             {/* ── Chat Header ── */}
-                            <div className="h-12 flex items-center px-4 border-b border-black/30 shadow-sm shrink-0 bg-[#313338] gap-3 z-10">
+                            <div className="h-14 flex items-center px-6 border-b border-gray-200 shadow-sm shrink-0 bg-white gap-3 z-10 transition-colors">
                                 {/* Mobile menu toggle */}
                                 <button
-                                    className="md:hidden text-[#949ba4] hover:text-[#dbdee1] mr-1"
+                                    className="md:hidden text-gray-400 hover:text-gray-600 mr-1"
                                     onClick={() => setIsMobileSidebarOpen(true)}
                                 >
                                     <Menu className="h-5 w-5" />
@@ -533,37 +524,37 @@ export default function Messages() {
 
                                 {/* Channel icon + name */}
                                 <div className="flex items-center gap-2 flex-1 overflow-hidden">
-                                    <span className="text-[#80848e]">
+                                    <span className="text-gray-400">
                                         {getChannelIcon(activeChannel.type)}
                                     </span>
-                                    <span className="font-bold text-[#f2f3f5] text-[16px] truncate">
+                                    <span className="font-bold text-gray-800 text-[18px] tracking-tight truncate">
                                         {activeChannel.name}
                                     </span>
                                     {activeChannel.subject && (
                                         <>
-                                            <div className="w-px h-5 bg-[#4e5058] mx-1 shrink-0" />
-                                            <span className="text-[14px] text-[#80848e] truncate">{activeChannel.subject}</span>
+                                            <div className="w-px h-5 bg-gray-300 mx-2 shrink-0" />
+                                            <span className="text-[14px] font-medium text-gray-500 truncate">{activeChannel.subject}</span>
                                         </>
                                     )}
                                 </div>
 
                                 {/* Right icons */}
-                                <div className="flex items-center gap-1 shrink-0">
-                                    <div className="hidden sm:flex items-center bg-[#1e1f22] rounded px-2 py-1 gap-2 h-7 mr-1">
-                                        <Search className="h-3.5 w-3.5 text-[#949ba4]" />
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <div className="hidden sm:flex items-center bg-gray-100 border border-gray-200 rounded-full px-3 py-1.5 gap-2 h-9 mr-1 focus-within:ring-2 focus-within:ring-[#4F6BED]/20 focus-within:border-[#4F6BED]/30 transition-all">
+                                        <Search className="h-4 w-4 text-gray-400" />
                                         <input
                                             type="text"
                                             placeholder="Search"
-                                            className="bg-transparent border-none outline-none text-[13px] text-[#dbdee1] placeholder:text-[#949ba4] w-20 focus:w-36 transition-all duration-200"
+                                            className="bg-transparent border-none outline-none text-[13px] text-gray-700 placeholder:text-gray-400 w-24 focus:w-40 transition-all duration-200"
                                         />
                                     </div>
-                                    <button className="p-2 text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="Notifications">
+                                    <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors" title="Notifications">
                                         <Bell className="h-5 w-5" />
                                     </button>
-                                    <button className="p-2 text-[#b5bac1] hover:text-[#dbdee1] transition-colors" title="Pinned messages">
+                                    <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors" title="Pinned messages">
                                         <Bookmark className="h-5 w-5" />
                                     </button>
-                                    <button className="p-2 text-[#b5bac1] hover:text-[#dbdee1] transition-colors hidden md:block" title="Members">
+                                    <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors hidden md:block" title="Members">
                                         <Users className="h-5 w-5" />
                                     </button>
                                 </div>
@@ -571,17 +562,17 @@ export default function Messages() {
 
                             {/* Pinned message banner */}
                             {activeChannel.pinnedMessage && (
-                                <div className="bg-[#5865f2]/10 border-b border-[#5865f2]/20 px-4 py-2 flex items-center gap-3 cursor-pointer hover:bg-[#5865f2]/15 transition-colors">
-                                    <Pin className="h-4 w-4 text-[#5865f2] shrink-0 -rotate-45" />
-                                    <div className="flex-1 truncate text-sm">
-                                        <span className="font-semibold text-[#5865f2] mr-2">Pinned:</span>
-                                        <span className="text-[#dbdee1]">{activeChannel.pinnedMessage}</span>
+                                <div className="bg-[#FFF9E6] border-b border-amber-200/50 px-6 py-2.5 flex items-center gap-3 cursor-pointer hover:bg-amber-50 transition-colors">
+                                    <Pin className="h-4 w-4 text-amber-500 shrink-0 -rotate-45" />
+                                    <div className="flex-1 text-sm">
+                                        <span className="font-semibold text-amber-700 mr-2 uppercase tracking-wide text-[11px]">Pinned by teacher</span>
+                                        <span className="text-gray-700 font-medium">{activeChannel.pinnedMessage}</span>
                                     </div>
                                 </div>
                             )}
 
                             {/* ── Message Feed ── */}
-                            <div className="flex-1 overflow-hidden flex flex-col min-h-0 bg-[#313338]">
+                            <div className="flex-1 overflow-hidden flex flex-col min-h-0 bg-[#F5F7FB]">
                                 {isLoadingMessages ? (
                                     <div className="flex items-center justify-center h-full">
                                         <Loader2 className="h-7 w-7 animate-spin text-[#949ba4]" />
@@ -626,162 +617,18 @@ export default function Messages() {
                                             };
 
                                             return (
-                                                <ContextMenu>
-                                                    <ContextMenuTrigger asChild>
-                                                        <div
-                                                            onTouchEnd={handleTouchEnd}
-                                                            className={cn(
-                                                                "group flex gap-4 px-4 hover:bg-[#2e3035] transition-colors duration-100 relative",
-                                                                showHeader ? "pt-4 pb-0.5" : "pt-0.5 pb-0.5",
-                                                                isTeacherAnnouncement && "bg-amber-500/5 hover:bg-amber-500/10"
-                                                            )}
-                                                        >
-                                                            {/* Quick action bar on hover */}
-                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-1 bg-[#2b2d31] border border-[#1e1f22] rounded-md p-1 shadow-lg z-10 transition-opacity">
-                                                                <button
-                                                                    className="p-1 hover:bg-[#35373c] rounded text-[#949ba4] hover:text-[#dbdee1] transition-colors"
-                                                                    onClick={() => setReplyingToMessage(msg)}
-                                                                    title="Reply"
-                                                                >
-                                                                    <MessageSquarePlus className="h-4 w-4" />
-                                                                </button>
-                                                                <button className="p-1 hover:bg-[#35373c] rounded text-[#949ba4] hover:text-amber-400 transition-colors" title="React">
-                                                                    <Smile className="h-4 w-4" />
-                                                                </button>
-                                                            </div>
-
-                                                            {/* Avatar column */}
-                                                            {showHeader ? (
-                                                                <Avatar className={cn("h-10 w-10 rounded-full shrink-0 mt-0.5", isAI && "ring-2 ring-[#5865f2]/40")}>
-                                                                    {msg.avatar && <AvatarImage src={msg.avatar} />}
-                                                                    <AvatarFallback className={cn(
-                                                                        "text-white text-sm font-bold rounded-full",
-                                                                        isAI ? "bg-[#5865f2]" : "bg-gradient-to-br from-[#5865f2] to-[#7c3aed]"
-                                                                    )}>
-                                                                        {isAI ? <Bot className="h-5 w-5" /> : getInitials(msg.senderName || "U")}
-                                                                    </AvatarFallback>
-                                                                </Avatar>
-                                                            ) : (
-                                                                <div className="w-10 shrink-0 flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <span className="text-[10px] text-[#4e5058] select-none">{formatTime}</span>
-                                                                </div>
-                                                            )}
-
-                                                            {/* Message content column */}
-                                                            <div className="flex-1 min-w-0">
-                                                                {showHeader && (
-                                                                    <div className="flex items-baseline gap-2 mb-0.5">
-                                                                        <span className={cn(
-                                                                            "font-semibold text-[15px] leading-none cursor-pointer hover:underline",
-                                                                            msg.senderRole === "teacher" ? "text-amber-400" : (isAI ? "text-[#5865f2]" : "text-[#f2f3f5]")
-                                                                        )}>
-                                                                            {msg.senderName}
-                                                                        </span>
-                                                                        {isAI && (
-                                                                            <span className="text-[9px] font-bold bg-[#5865f2] text-white px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
-                                                                                AI
-                                                                            </span>
-                                                                        )}
-                                                                        <span className="text-[11px] text-[#4e5058] font-normal">{formatDate} {formatTime}</span>
-                                                                        {isOwn && (
-                                                                            <span className="text-[10px] text-[#4e5058]">
-                                                                                {msg.status === 'sending' ? '⏳' : msg.status === 'error' ? '❌' : ''}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                )}
-
-                                                                {isTeacherAnnouncement && showHeader && (
-                                                                    <div className="flex items-center gap-1.5 mb-1.5 text-amber-400 text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 w-fit px-2 py-0.5 rounded-sm">
-                                                                        <Megaphone className="h-3 w-3" /> Class Announcement
-                                                                    </div>
-                                                                )}
-
-                                                                <div className={cn(
-                                                                    "text-[15px] leading-relaxed break-words",
-                                                                    isTeacherAnnouncement ? "text-amber-100/90" : "text-[#dbdee1]"
-                                                                )}>
-                                                                    <div className="prose prose-sm max-w-none">
-                                                                        <ReactMarkdown
-                                                                            remarkPlugins={[remarkGfm, remarkMath]}
-                                                                            rehypePlugins={[rehypeKatex]}
-                                                                            components={{
-                                                                                p: ({ node, ...props }) => <p className="m-0 text-[#dbdee1]" {...props} />,
-                                                                                a: ({ node, ...props }) => <a className="text-[#00a8fc] hover:underline" target="_blank" rel="noopener noreferrer" {...props} />,
-                                                                                code: ({ node, inline, ...props }: any) => (
-                                                                                    inline ? (
-                                                                                        <code className="bg-[#2b2d31] text-[#dbdee1] px-1 py-0.5 rounded text-[13px] font-mono" {...props} />
-                                                                                    ) : (
-                                                                                        <div className="bg-[#2b2d31] p-3 rounded-md overflow-x-auto my-2 border border-[#1e1f22]">
-                                                                                            <code className="text-[13px] font-mono text-[#dbdee1]" {...props} />
-                                                                                        </div>
-                                                                                    )
-                                                                                )
-                                                                            }}
-                                                                        >
-                                                                            {msg.content}
-                                                                        </ReactMarkdown>
-                                                                    </div>
-
-                                                                    {msg.attachment && (
-                                                                        <div className={cn(
-                                                                            "mt-2 p-3 rounded-md border max-w-sm",
-                                                                            msg.attachment.isHomework
-                                                                                ? "bg-emerald-500/10 border-emerald-500/30"
-                                                                                : "bg-[#2b2d31] border-[#1e1f22]"
-                                                                        )}>
-                                                                            {msg.attachment.isHomework && (
-                                                                                <div className="flex items-center gap-1.5 mb-2 text-emerald-400 text-[10px] font-bold uppercase tracking-wider">
-                                                                                    <School className="h-3 w-3" /> Homework Submission
-                                                                                </div>
-                                                                            )}
-                                                                            {msg.attachment.type === 'image' ? (
-                                                                                <img src={msg.attachment.url} alt={msg.attachment.name} className="w-full h-auto rounded border border-[#1e1f22]" />
-                                                                            ) : (
-                                                                                <div className="flex items-center gap-3">
-                                                                                    <div className="bg-[#1e1f22] p-2 rounded">
-                                                                                        <Paperclip className="h-5 w-5 text-[#949ba4]" />
-                                                                                    </div>
-                                                                                    <span className="text-sm truncate text-[#dbdee1]">{msg.attachment.name}</span>
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </ContextMenuTrigger>
-
-                                                    {/* Context Menu */}
-                                                    <ContextMenuContent className="w-52 bg-[#111214] border-[#1e1f22] text-[#dbdee1] shadow-2xl rounded-md z-50">
-                                                        <ContextMenuItem onClick={() => setReplyingToMessage(msg)} className="cursor-pointer hover:bg-[#5865f2] focus:bg-[#5865f2] py-2 rounded-sm">
-                                                            <MessageSquarePlus className="mr-2 h-4 w-4" /> Reply
-                                                        </ContextMenuItem>
-                                                        <ContextMenuItem className="cursor-pointer hover:bg-[#5865f2] focus:bg-[#5865f2] py-2 rounded-sm">
-                                                            <Smile className="mr-2 h-4 w-4" /> Add Reaction
-                                                        </ContextMenuItem>
-                                                        {isOwn && (
-                                                            <ContextMenuItem className="cursor-pointer hover:bg-[#5865f2] focus:bg-[#5865f2] py-2 rounded-sm">
-                                                                <Settings className="mr-2 h-4 w-4" /> Edit Message
-                                                            </ContextMenuItem>
-                                                        )}
-                                                        {currentUser.profile?.role === 'teacher' && (
-                                                            <ContextMenuItem className="cursor-pointer hover:bg-[#5865f2] focus:bg-[#5865f2] py-2 rounded-sm">
-                                                                <Pin className="mr-2 h-4 w-4 text-amber-400" /> Pin Message
-                                                            </ContextMenuItem>
-                                                        )}
-                                                        <ContextMenuSeparator className="bg-[#1e1f22] my-1" />
-                                                        {(isOwn || currentUser.profile?.role === 'teacher') ? (
-                                                            <ContextMenuItem className="cursor-pointer hover:bg-red-500 focus:bg-red-500 text-red-400 focus:text-white py-2 rounded-sm">
-                                                                Delete Message
-                                                            </ContextMenuItem>
-                                                        ) : (
-                                                            <ContextMenuItem className="cursor-pointer hover:bg-red-500 focus:bg-red-500 text-red-400 focus:text-white py-2 rounded-sm">
-                                                                Report Message
-                                                            </ContextMenuItem>
-                                                        )}
-                                                    </ContextMenuContent>
-                                                </ContextMenu>
+                                                <MessageBubble
+                                                    msg={msg as any}
+                                                    isOwn={isOwn}
+                                                    isAI={isAI}
+                                                    isTeacherAnnouncement={isTeacherAnnouncement}
+                                                    showHeader={showHeader}
+                                                    formatTime={formatTime}
+                                                    formatDate={formatDate}
+                                                    isTeacherStatus={currentUser.profile?.role === 'teacher'}
+                                                    onReply={setReplyingToMessage}
+                                                    onDoubleTap={handleTouchEnd}
+                                                />
                                             );
                                         }}
                                     />
@@ -789,143 +636,33 @@ export default function Messages() {
                             </div>
 
                             {/* ── Message Input Area ── */}
-                            <div className="px-4 pb-6 pt-2 bg-[#313338] shrink-0">
-                                {/* Typing Indicator */}
-                                <AnimatePresence>
-                                    {Object.keys(typingUsers).length > 0 && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 8 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0 }}
-                                            className="flex items-center gap-2 text-[12px] text-[#949ba4] mb-1 px-1"
-                                        >
-                                            <div className="flex gap-0.5">
-                                                <div className="w-1 h-1 bg-[#949ba4] rounded-full animate-bounce [animation-delay:-0.3s]" />
-                                                <div className="w-1 h-1 bg-[#949ba4] rounded-full animate-bounce [animation-delay:-0.15s]" />
-                                                <div className="w-1 h-1 bg-[#949ba4] rounded-full animate-bounce" />
-                                            </div>
-                                            {Object.values(typingUsers).length === 1
-                                                ? `${Object.values(typingUsers)[0].username} is typing...`
-                                                : `${Object.values(typingUsers).length} people are typing...`}
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                            <Composer
+                                inputValue={inputValue}
+                                setInputValue={setInputValue}
+                                handleSendMessage={handleSendMessage}
+                                handleKeyDown={handleKeyDown}
+                                handleFileAttach={handleFileAttach}
+                                fileInputRef={fileInputRef}
+                                handleFileChange={handleFileChange}
+                                activeChannel={activeChannel}
+                                currentUser={currentUser}
+                                replyingToMessage={replyingToMessage}
+                                setReplyingToMessage={setReplyingToMessage}
+                                pendingAttachment={pendingAttachment}
+                                setPendingAttachment={setPendingAttachment}
+                                typingUsers={typingUsers}
+                                handleTyping={() => {
+                                    const now = Date.now();
+                                    if (now - lastTypingTimeRef.current > 2000 && activeChannel && ws) {
+                                        ws.send(JSON.stringify({ type: "typing", channelId: activeChannel.id }));
+                                        lastTypingTimeRef.current = now;
+                                    }
+                                }}
+                                onAskAITutor={() => {
+                                    setInputValue(prev => prev ? prev + " @AI Tutor " : "@AI Tutor ");
+                                }}
+                            />
 
-                                {/* Reply Banner */}
-                                {replyingToMessage && (
-                                    <div className="bg-[#2b2d31] border border-[#1e1f22] rounded-t-lg px-4 py-2 flex items-center justify-between -mb-1">
-                                        <div className="flex items-center gap-2 overflow-hidden">
-                                            <MessageSquarePlus className="h-4 w-4 text-[#5865f2] shrink-0" />
-                                            <span className="text-[12px] text-[#5865f2] font-semibold shrink-0">
-                                                Replying to {replyingToMessage.senderName}
-                                            </span>
-                                            <span className="text-[12px] text-[#949ba4] truncate">{replyingToMessage.content}</span>
-                                        </div>
-                                        <button onClick={() => setReplyingToMessage(null)} className="text-[#949ba4] hover:text-[#dbdee1] ml-2">
-                                            ×
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* Pending attachment */}
-                                {pendingAttachment && (
-                                    <div className="bg-[#2b2d31] border border-[#1e1f22] rounded-t-lg p-3 flex items-center gap-3 -mb-1 relative">
-                                        <button
-                                            onClick={() => setPendingAttachment(null)}
-                                            className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold"
-                                        >×</button>
-                                        {pendingAttachment.type === 'image' ? (
-                                            <img src={pendingAttachment.previewUrl} className="h-14 w-14 rounded object-cover border border-[#1e1f22]" />
-                                        ) : (
-                                            <div className="h-14 w-14 bg-[#1e1f22] rounded flex items-center justify-center border border-[#1e1f22]">
-                                                <Paperclip className="h-5 w-5 text-[#949ba4]" />
-                                            </div>
-                                        )}
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm text-[#dbdee1] truncate font-medium">{pendingAttachment.name}</p>
-                                            <label className="flex items-center gap-2 cursor-pointer mt-1">
-                                                <div className={cn("w-4 h-4 rounded border flex items-center justify-center",
-                                                    pendingAttachment.isHomework ? "bg-emerald-500 border-emerald-500" : "bg-[#1e1f22] border-[#4e5058]"
-                                                )}>
-                                                    {pendingAttachment.isHomework && <span className="text-white text-[10px]">✔</span>}
-                                                </div>
-                                                <span className="text-[12px] text-[#949ba4]">Submit for grading</span>
-                                                <input
-                                                    type="checkbox"
-                                                    className="hidden"
-                                                    checked={pendingAttachment.isHomework}
-                                                    onChange={e => setPendingAttachment(prev => prev ? { ...prev, isHomework: e.target.checked } : null)}
-                                                />
-                                            </label>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <input
-                                    type="file"
-                                    accept="image/*,.pdf,.doc,.docx"
-                                    ref={fileInputRef}
-                                    className="hidden"
-                                    onChange={handleFileChange}
-                                />
-
-                                {/* Main Input Bar */}
-                                <form
-                                    onSubmit={handleSendMessage}
-                                    className={cn(
-                                        "flex items-center bg-[#383a40] rounded-lg overflow-hidden",
-                                        (replyingToMessage || pendingAttachment) && "rounded-t-none"
-                                    )}
-                                >
-                                    {/* Add file button */}
-                                    <button
-                                        type="button"
-                                        onClick={handleFileAttach}
-                                        className="px-4 py-3 text-[#949ba4] hover:text-[#dbdee1] transition-colors shrink-0"
-                                        title="Attach file"
-                                    >
-                                        <Plus className="h-5 w-5" />
-                                    </button>
-
-                                    {/* Text input */}
-                                    <input
-                                        type="text"
-                                        value={inputValue}
-                                        onChange={(e) => {
-                                            setInputValue(e.target.value);
-                                            const now = Date.now();
-                                            if (now - lastTypingTimeRef.current > 2000 && activeChannel && ws) {
-                                                ws.send(JSON.stringify({ type: "typing", channelId: activeChannel.id }));
-                                                lastTypingTimeRef.current = now;
-                                            }
-                                        }}
-                                        onKeyDown={handleKeyDown}
-                                        placeholder={
-                                            activeChannel.type === 'announcement' && currentUser.profile?.role !== 'teacher'
-                                                ? "Only teachers can post here"
-                                                : `Message #${activeChannel.name}`
-                                        }
-                                        disabled={activeChannel.type === 'announcement' && currentUser.profile?.role !== 'teacher'}
-                                        className="flex-1 bg-transparent border-none outline-none text-[15px] text-[#dbdee1] placeholder:text-[#4e5058] py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    />
-
-                                    {/* Right icons */}
-                                    <div className="flex items-center gap-1 px-3">
-                                        <button type="button" className="text-[#949ba4] hover:text-[#dbdee1] transition-colors p-1" title="Voice message">
-                                            <Mic className="h-5 w-5" />
-                                        </button>
-                                        <button type="button" className="text-[#949ba4] hover:text-[#dbdee1] transition-colors p-1" title="Emoji">
-                                            <Smile className="h-5 w-5" />
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            className="ml-1 bg-[#5865f2] hover:bg-[#4752c4] text-white rounded px-3 py-1.5 text-[13px] font-semibold transition-colors flex items-center gap-1.5"
-                                        >
-                                            Send
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
