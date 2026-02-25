@@ -134,6 +134,42 @@
   }
 }
 
+@keyframes pulse-live {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 @keyframes scale-in {
   from {
     opacity: 0;
@@ -193,5 +229,39 @@
 
   .delay-500 {
     animation-delay: 500ms;
+  }
+
+  /* Live pulse for live rooms dot */
+  .animate-pulse-live {
+    animation: pulse-live 1.8s ease-in-out infinite;
+  }
+
+  /* Gentle float for hero icon */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Shimmer for skeleton loading */
+  .animate-shimmer {
+    animation: shimmer 1.5s linear infinite;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.06) 50%, transparent 100%);
+    background-size: 200% 100%;
+  }
+
+  /* Hero card glow border */
+  .glow-border-blue {
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3), 0 0 24px rgba(99, 102, 241, 0.12), 0 4px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .glow-border-green {
+    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3), 0 0 24px rgba(16, 185, 129, 0.12);
+  }
+
+  .glow-border-orange {
+    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3), 0 0 24px rgba(245, 158, 11, 0.12);
+  }
+
+  .glow-border-purple {
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.3), 0 0 24px rgba(139, 92, 246, 0.12);
   }
 }
