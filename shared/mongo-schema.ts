@@ -16,10 +16,13 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  role: { type: String, enum: ["student", "teacher"], default: "student" },
+  role: { type: String, enum: ["student", "teacher", "parent", "principal", "admin"], default: "student" },
   avatar: String,
   class: String,
   subject: String,
+  // Firebase auth bridge
+  firebaseUid: { type: String, default: null, sparse: true },
+  displayName: { type: String, default: null },
 });
 
 const TestSchema = new mongoose.Schema({
@@ -104,9 +107,17 @@ const ChannelSchema = new mongoose.Schema({
   id: { type: Number, required: true, unique: true },
   workspaceId: { type: Number, required: true },
   name: { type: String, required: true },
-  type: { type: String, enum: ["text", "announcement"], default: "text" },
+  type: { type: String, enum: ["text", "announcement", "dm"], default: "text" },
+  class: { type: String, default: null },
+  subject: { type: String, default: null },
   pinnedMessages: [{ type: Number }],
   createdAt: { type: Date, default: Date.now },
+  // Phase 3: Messaging feature extensions
+  category: { type: String, enum: ['announcement', 'class', 'teacher', 'friend', 'parent'], default: 'class' },
+  isReadOnly: { type: Boolean, default: false },
+  participants: [{ type: String }],   // firebase UIDs (for DMs between two users)
+  unreadCounts: { type: Map, of: Number, default: {} }, // firebaseUid → unread count
+  typingUsers: [{ type: String }],   // firebase UIDs currently typing
 });
 
 const MessageSchema = new mongoose.Schema({
@@ -117,8 +128,25 @@ const MessageSchema = new mongoose.Schema({
   type: { type: String, enum: ["text", "file", "image"], default: "text" },
   fileUrl: { type: String, default: null },
   isPinned: { type: Boolean, default: false },
+  isHomework: { type: Boolean, default: false },
+  gradingStatus: { type: String, enum: ["pending", "graded", null], default: null },
+  readBy: [{ type: Number }],
   createdAt: { type: Date, default: Date.now },
+  // Phase 3: Messaging feature extensions
+  senderRole: { type: String, enum: ['student', 'teacher', 'parent', 'principal', 'admin'], default: 'student' },
+  messageType: { type: String, enum: ['text', 'doubt', 'assignment', 'announcement', 'system'], default: 'text' },
+  replyTo: { type: Number, default: null },          // message id being replied to
+  mentions: [{ type: String }],                      // firebase UIDs mentioned
+  isDoubtAnswered: { type: Boolean, default: false },
+  assignmentData: {
+    title: { type: String },
+    dueDate: { type: Date },
+    fileUrl: { type: String },
+    subject: { type: String },
+  },
+  deliveredTo: [{ type: String }],                   // firebase UIDs message was delivered to
 });
+
 
 export const MongoUser = mongoose.model("User", UserSchema);
 export const MongoTest = mongoose.model("Test", TestSchema);
