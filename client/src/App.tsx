@@ -12,6 +12,7 @@ import OcrScan from "@/pages/ocr-scan";
 import Analytics from "@/pages/analytics";
 import AiTutor from "@/pages/ai-tutor";
 import StudentDirectory from "@/pages/student-directory";
+import MessagesPage from "@/pages/messages";
 import { FirebaseAuthProvider, useFirebaseAuth } from "./contexts/firebase-auth-context";
 import { ThemeProvider } from "./contexts/theme-context";
 import "./blackboard-login.css";
@@ -72,6 +73,7 @@ const WrappedOcrScan = withLayout(OcrScan);
 const WrappedAnalytics = withLayout(Analytics);
 const WrappedAiTutor = withLayout(AiTutor);
 const WrappedStudentDirectory = withLayout(StudentDirectory);
+const WrappedMessages = withLayout(MessagesPage, { fullWidth: true });
 
 /**
  * Render application routes and handle authentication and loading states.
@@ -136,6 +138,7 @@ function Router() {
       <Route path="/analytics" component={WrappedAnalytics} />
       <Route path="/ai-tutor" component={WrappedAiTutor} />
       <Route path="/student-directory" component={WrappedStudentDirectory} />
+      <Route path="/messages" component={WrappedMessages} />
 
       {/* Fallback to 404 */}
       <Route component={NotFound} />
