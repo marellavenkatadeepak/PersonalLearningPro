@@ -1,88 +1,91 @@
-import { useEffect, useRef, useCallback } from 'react';
+/**
+ * client/src/hooks/use-chat-ws.ts  — Phase 5.2
+ *
+ * React hook that manages a WebSocket connection to /ws/chat.
+ *
+ * Features:
+ *  - Authenticates with Firebase ID token via ?token= query param
+ *  - Joins/leaves channels as the active conversation changes
+ *  - Dispatches real-time events: new_message, user_typing, user_presence,
+ *    message_read, message_delivered, doubt_answered, message_pinned,
+ *    unread_updated
+ *  - Exposes sendMessage, sendTyping, stopTyping, markRead, markDelivered
+ *  - Reconnects automatically with exponential backoff (max 30s)
+ */
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+import { useEffect, useRef, useCallback, useReducer } from 'react';
+import { useFirebaseAuth } from '@/contexts/firebase-auth-context';
+import { Message } from '@/types/chat';
 
-export interface WsNewMessage {
-    type: 'new_message';
-    message: {
-        id: number;
-        channelId: number;
-        authorId: number;
-        authorUsername: string;
-        content: string;
-        messageType: 'text' | 'file' | 'image';
-        fileUrl?: string;
-        readBy: number[];
-        createdAt: string;
-    };
-}
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface WsTypingEvent {
-    type: 'user_typing';
-    userId: number;
-    username: string;
-    channelId: number;
-}
+export type WsStatus = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'error';
 
-export interface WsReadEvent {
-    type: 'message_read';
-    messageId: number;
-    userId: number;
-    channelId: number;
-}
-
-export interface WsPresenceEvent {
-    type: 'user_presence';
-    userId: number;
-    username: string;
-    status: 'online' | 'offline';
-    channelId: number;
-}
-
-export type WsIncomingEvent =
-    | WsNewMessage
-    | WsTypingEvent
-    | WsReadEvent
-    | WsPresenceEvent
-    | { type: 'connected'; userId: number; username: string }
-    | { type: 'joined_channel'; channelId: number }
-    | { type: 'left_channel'; channelId: number }
-    | { type: 'error'; message: string };
-
-// ─── Hook options ──────────────────────────────────────────────────────────
-
-export interface UseChatWsOptions {
-    /** Numeric channel ID to join on mount and leave on unmount */
+export interface ChatWsEvent {
+    type: string;
     channelId?: number;
-    onNewMessage?: (event: WsNewMessage) => void;
-    onTyping?: (event: WsTypingEvent) => void;
-    onRead?: (event: WsReadEvent) => void;
-    onPresence?: (event: WsPresenceEvent) => void;
+    message?: any;
+    messageId?: number;
+    userId?: number;
+    firebaseUid?: string;
+    displayName?: string;
+    status?: string;
+    delta?: number;
+    answeredBy?: { userId: number; firebaseUid: string; displayName: string };
+    pinnedBy?: { userId: number; firebaseUid: string; displayName: string };
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────
+interface WsState {
+    status: WsStatus;
+    connectedUserId: number | null;
+}
 
-export function useChatWs(options: UseChatWsOptions = {}) {
-    const { channelId, onNewMessage, onTyping, onRead, onPresence } = options;
+type WsAction =
+    | { type: 'connecting' }
+    | { type: 'connected'; userId: number }
+    | { type: 'reconnecting' }
+    | { type: 'error' }
+    | { type: 'disconnected' };
 
+function wsReducer(state: WsState, action: WsAction): WsState {
+    switch (action.type) {
+        case 'connecting': return { ...state, status: 'connecting' };
+        case 'connected': return { status: 'connected', connectedUserId: action.userId };
+        case 'reconnecting': return { ...state, status: 'reconnecting' };
+        case 'error': return { ...state, status: 'error' };
+        case 'disconnected': return { status: 'idle', connectedUserId: null };
+        default: return state;
+    }
+}
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
+interface UseChatWsOptions {
+    /** Called whenever a server event arrives (new_message, typing, etc.) */
+    onEvent: (event: ChatWsEvent) => void;
+    /** Channel to join immediately after connecting */
+    activeChannelId?: number;
+}
+
+export function useChatWs({ onEvent, activeChannelId }: UseChatWsOptions) {
+    const { currentUser } = useFirebaseAuth();
     const wsRef = useRef<WebSocket | null>(null);
+    const onEventRef = useRef(onEvent);
     const reconnectTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reconnectDelay = useRef(1000);
     const isMounted = useRef(true);
+    const activeChannelRef = useRef<number | undefined>(activeChannelId);
 
-    // Stable callback refs so connect() doesn't close over stale values
-    const onNewMessageRef = useRef(onNewMessage);
-    const onTypingRef = useRef(onTyping);
-    const onReadRef = useRef(onRead);
-    const onPresenceRef = useRef(onPresence);
-    onNewMessageRef.current = onNewMessage;
-    onTypingRef.current = onTyping;
-    onReadRef.current = onRead;
-    onPresenceRef.current = onPresence;
+    const [state, dispatch] = useReducer(wsReducer, {
+        status: 'idle',
+        connectedUserId: null,
+    });
 
-    const channelIdRef = useRef(channelId);
-    channelIdRef.current = channelId;
+    // Keep onEvent callback ref fresh
+    useEffect(() => { onEventRef.current = onEvent; }, [onEvent]);
+    useEffect(() => { activeChannelRef.current = activeChannelId; }, [activeChannelId]);
 
+    // ── Send helper ─────────────────────────────────────────────────────────────
     const sendRaw = useCallback((data: object) => {
         const ws = wsRef.current;
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -92,126 +95,168 @@ export function useChatWs(options: UseChatWsOptions = {}) {
         return false;
     }, []);
 
-    const connect = useCallback(() => {
+    // ── Connect ─────────────────────────────────────────────────────────────────
+    const connect = useCallback(async () => {
         if (!isMounted.current) return;
 
-        // Build WS URL from current window location
-        const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const url = `${proto}://${window.location.host}/ws/chat`;
+        const fbUser = currentUser.user;
+        const isConnected = wsRef.current?.readyState === WebSocket.OPEN;
+        if (!fbUser || isConnected) return;
+
+        dispatch({ type: 'connecting' });
+
+        let token = '';
+        try {
+            token = await fbUser.getIdToken();
+        } catch {
+            console.warn('[use-chat-ws] Could not get Firebase ID token — connecting without token (session fallback)');
+        }
+
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        const url = `${protocol}//${host}/ws/chat${token ? `?token=${encodeURIComponent(token)}` : ''}`;
 
         const ws = new WebSocket(url);
         wsRef.current = ws;
 
         ws.onopen = () => {
-            if (!isMounted.current) { ws.close(); return; }
-            reconnectDelay.current = 1000; // reset backoff on success
-
-            // Join the active channel if provided
-            if (channelIdRef.current != null) {
-                ws.send(JSON.stringify({ type: 'join_channel', channelId: channelIdRef.current }));
-            }
+            if (!isMounted.current) return ws.close();
+            console.log('[use-chat-ws] Connected');
+            reconnectDelay.current = 1000; // reset backoff
         };
 
-        ws.onmessage = (event) => {
-            let data: WsIncomingEvent;
+        ws.onmessage = (ev) => {
             try {
-                data = JSON.parse(event.data as string);
+                const event: ChatWsEvent = JSON.parse(ev.data);
+
+                if (event.type === 'connected') {
+                    dispatch({ type: 'connected', userId: event.userId ?? 0 });
+                    // Join channel if one is already active
+                    if (activeChannelRef.current) {
+                        sendRaw({ type: 'join_channel', channelId: activeChannelRef.current });
+                    }
+                }
+
+                onEventRef.current(event);
             } catch {
-                return;
+                console.error('[use-chat-ws] Failed to parse event');
             }
-
-            switch (data.type) {
-                case 'new_message':
-                    onNewMessageRef.current?.(data);
-                    break;
-                case 'user_typing':
-                    onTypingRef.current?.(data);
-                    break;
-                case 'message_read':
-                    onReadRef.current?.(data);
-                    break;
-                case 'user_presence':
-                    onPresenceRef.current?.(data);
-                    break;
-                case 'error':
-                    console.warn('[chat-ws] Server error:', data.message);
-                    break;
-                default:
-                    break;
-            }
-        };
-
-        ws.onclose = (ev) => {
-            wsRef.current = null;
-            // 4001 = unauthorized — don't reconnect
-            if (ev.code === 4001) {
-                console.warn('[chat-ws] Unauthorized. Not reconnecting.');
-                return;
-            }
-            if (!isMounted.current) return;
-
-            // Exponential backoff up to 30s
-            const delay = Math.min(reconnectDelay.current, 30000);
-            reconnectDelay.current = delay * 2;
-            reconnectTimeout.current = setTimeout(connect, delay);
         };
 
         ws.onerror = () => {
-            ws.close();
+            dispatch({ type: 'error' });
         };
-    }, []);
 
-    // Mount / unmount
+        ws.onclose = () => {
+            if (!isMounted.current) return;
+            dispatch({ type: 'disconnected' });
+            scheduleReconnect();
+        };
+    }, [currentUser.user, sendRaw]);
+
+    // ── Reconnect with exponential backoff ──────────────────────────────────────
+    const scheduleReconnect = useCallback(() => {
+        if (!isMounted.current) return;
+        dispatch({ type: 'reconnecting' });
+
+        if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
+        const delay = Math.min(reconnectDelay.current, 30000);
+        reconnectDelay.current = delay * 2;
+
+        console.log(`[use-chat-ws] Reconnecting in ${delay}ms`);
+        reconnectTimeout.current = setTimeout(() => {
+            if (isMounted.current) connect();
+        }, delay);
+    }, [connect]);
+
+    // ── Connect on mount / Firebase user change ─────────────────────────────────
+    useEffect(() => {
+        if (currentUser.user) connect();
+    }, [currentUser.user, connect]);
+
+    // ── Switch channels on activeChannelId change ───────────────────────────────
+    useEffect(() => {
+        if (state.status !== 'connected') return;
+
+        const join = () => {
+            if (activeChannelId) sendRaw({ type: 'join_channel', channelId: activeChannelId });
+        };
+        join();
+
+        return () => {
+            // Leave channel on cleanup (conversation switch)
+            if (activeChannelId) {
+                sendRaw({ type: 'leave_channel', channelId: activeChannelId });
+                sendRaw({ type: 'stop_typing', channelId: activeChannelId });
+            }
+        };
+    }, [activeChannelId, state.status, sendRaw]);
+
+    // ── Cleanup on unmount ──────────────────────────────────────────────────────
     useEffect(() => {
         isMounted.current = true;
-        connect();
-
         return () => {
             isMounted.current = false;
             if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
-            if (wsRef.current) {
-                wsRef.current.close(1000, 'Component unmounted');
-                wsRef.current = null;
-            }
+            wsRef.current?.close();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Join / leave when channelId changes
-    useEffect(() => {
-        const ws = wsRef.current;
-        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    // ─── Public API ─────────────────────────────────────────────────────────────
 
-        if (channelId != null) {
-            ws.send(JSON.stringify({ type: 'join_channel', channelId }));
-        }
+    const sendMessage = useCallback((channelId: number, content: string, options?: {
+        messageType?: string;
+        fileUrl?: string;
+        senderRole?: string;
+        replyTo?: number;
+        mentions?: string[];
+    }) => {
+        return sendRaw({
+            type: 'send_message',
+            channelId,
+            content,
+            messageType: options?.messageType || 'text',
+            ...(options?.fileUrl && { fileUrl: options.fileUrl }),
+            ...(options?.senderRole && { senderRole: options.senderRole }),
+            ...(options?.replyTo && { replyTo: options.replyTo }),
+            ...(options?.mentions?.length && { mentions: options.mentions }),
+        });
+    }, [sendRaw]);
 
-        return () => {
-            const wsNow = wsRef.current;
-            if (wsNow && wsNow.readyState === WebSocket.OPEN && channelId != null) {
-                wsNow.send(JSON.stringify({ type: 'leave_channel', channelId }));
-            }
-        };
-    }, [channelId]);
+    const sendTyping = useCallback((channelId: number) => {
+        return sendRaw({ type: 'typing', channelId });
+    }, [sendRaw]);
 
-    // ─── Public API ─────────────────────────────────────────────────────────
+    const stopTyping = useCallback((channelId: number) => {
+        return sendRaw({ type: 'stop_typing', channelId });
+    }, [sendRaw]);
 
-    const sendMessage = useCallback(
-        (chId: number, content: string, messageType: 'text' | 'file' | 'image' = 'text', fileUrl?: string) => {
-            return sendRaw({ type: 'send_message', channelId: chId, content, messageType, fileUrl });
-        },
-        [sendRaw],
-    );
+    const markRead = useCallback((channelId: number, messageId: number) => {
+        return sendRaw({ type: 'mark_read', channelId, messageId });
+    }, [sendRaw]);
 
-    const sendTyping = useCallback(
-        (chId: number) => sendRaw({ type: 'typing', channelId: chId }),
-        [sendRaw],
-    );
+    const markDelivered = useCallback((channelId: number, messageId: number) => {
+        return sendRaw({ type: 'mark_delivered', channelId, messageId });
+    }, [sendRaw]);
 
-    const markRead = useCallback(
-        (chId: number, messageId: number) => sendRaw({ type: 'mark_read', channelId: chId, messageId }),
-        [sendRaw],
-    );
+    const answerDoubt = useCallback((channelId: number, messageId: number) => {
+        return sendRaw({ type: 'answer_doubt', channelId, messageId });
+    }, [sendRaw]);
 
-    return { sendMessage, sendTyping, markRead };
+    const pinMessage = useCallback((channelId: number, messageId: number) => {
+        return sendRaw({ type: 'pin_message', channelId, messageId });
+    }, [sendRaw]);
+
+    return {
+        status: state.status,
+        connectedUserId: state.connectedUserId,
+        isConnected: state.status === 'connected',
+        sendMessage,
+        sendTyping,
+        stopTyping,
+        markRead,
+        markDelivered,
+        answerDoubt,
+        pinMessage,
+    };
 }
