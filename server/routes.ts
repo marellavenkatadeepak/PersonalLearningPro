@@ -989,7 +989,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Count unread in last 50 messages
       const messages = await storage.getMessagesByChannel(channelId, 50);
-      const unreadCount = messages.filter(m => !m.readBy?.includes(req.session!.userId)).length;
+      const unreadCount = messages.filter(m => !m.readBy?.includes(req.session!.userId!)).length;
 
       return res.status(200).json({ unreadCount });
     } catch {
