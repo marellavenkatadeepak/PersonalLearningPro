@@ -5,12 +5,14 @@ import {
   type TestAttempt, type InsertTestAttempt,
   type Answer, type InsertAnswer,
   type Analytics, type InsertAnalytics,
+  type TestAssignment, type InsertTestAssignment,
   type Workspace, type InsertWorkspace,
   type Channel, type InsertChannel,
   type Message, type InsertMessage,
 } from "@shared/schema";
 import {
   MongoUser, MongoTest, MongoQuestion, MongoTestAttempt, MongoAnswer, MongoAnalytics,
+  MongoTestAssignment,
   MongoWorkspace, MongoChannel, MongoMessage,
   getNextSequenceValue
 } from "@shared/mongo-schema";
@@ -26,7 +28,7 @@ import {
 } from "./lib/cassandra-message-store";
 import { Snowflake } from "./lib/snowflake";
 import session from "express-session";
-import MongoStore from "connect-mongo";
+import MemoryStore from "memorystore";
 
 export interface IStorage {
   // Session store
@@ -70,6 +72,14 @@ export interface IStorage {
   getAnalyticsByUser(userId: number): Promise<Analytics[]>;
   getAnalyticsByTest(testId: number): Promise<Analytics[]>;
 
+  // Test Assignment operations
+  createTestAssignment(assignment: InsertTestAssignment): Promise<TestAssignment>;
+  getTestAssignment(id: number): Promise<TestAssignment | undefined>;
+  getTestAssignments(filters: { studentId?: number; testId?: number; status?: string }): Promise<TestAssignment[]>;
+  updateTestAssignment(id: number, update: Partial<InsertTestAssignment>): Promise<TestAssignment | undefined>;
+  getTestAssignmentsByTest(testId: number): Promise<TestAssignment[]>;
+  getTestAssignmentByStudentAndTest(studentId: number, testId: number): Promise<TestAssignment | undefined>;
+
   // Workspace operations
   createWorkspace(workspace: InsertWorkspace): Promise<Workspace>;
   getWorkspace(id: number): Promise<Workspace | undefined>;
@@ -101,10 +111,9 @@ export class MongoStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    this.sessionStore = MongoStore.create({
-      mongoUrl: process.env.MONGODB_URL,
-      collectionName: 'sessions',
-      ttl: 24 * 60 * 60 // 1 day
+    const MemStore = MemoryStore(session);
+    this.sessionStore = new MemStore({
+      checkPeriod: 24 * 60 * 60 * 1000, // prune expired entries every 24h
     });
   }
 
@@ -268,6 +277,43 @@ export class MongoStorage implements IStorage {
   async getAnalyticsByTest(testId: number): Promise<Analytics[]> {
     const results = await MongoAnalytics.find({ testId });
     return results.map((r: any) => this.mapMongoDoc<Analytics>(r));
+  }
+
+  // Test Assignment operations
+  async createTestAssignment(assignment: InsertTestAssignment): Promise<TestAssignment> {
+    const id = await getNextSequenceValue("assignment_id");
+    const newAssignment = new MongoTestAssignment({ ...assignment, id });
+    await newAssignment.save();
+    return this.mapMongoDoc<TestAssignment>(newAssignment);
+  }
+
+  async getTestAssignment(id: number): Promise<TestAssignment | undefined> {
+    const assignment = await MongoTestAssignment.findOne({ id });
+    return assignment ? this.mapMongoDoc<TestAssignment>(assignment) : undefined;
+  }
+
+  async getTestAssignments(filters: { studentId?: number; testId?: number; status?: string }): Promise<TestAssignment[]> {
+    const filter: any = {};
+    if (filters.studentId !== undefined) filter.studentId = filters.studentId;
+    if (filters.testId !== undefined) filter.testId = filters.testId;
+    if (filters.status) filter.status = filters.status;
+    const assignments = await MongoTestAssignment.find(filter);
+    return assignments.map((a: any) => this.mapMongoDoc<TestAssignment>(a));
+  }
+
+  async updateTestAssignment(id: number, update: Partial<InsertTestAssignment>): Promise<TestAssignment | undefined> {
+    const assignment = await MongoTestAssignment.findOneAndUpdate({ id }, update, { new: true });
+    return assignment ? this.mapMongoDoc<TestAssignment>(assignment) : undefined;
+  }
+
+  async getTestAssignmentsByTest(testId: number): Promise<TestAssignment[]> {
+    const assignments = await MongoTestAssignment.find({ testId });
+    return assignments.map((a: any) => this.mapMongoDoc<TestAssignment>(a));
+  }
+
+  async getTestAssignmentByStudentAndTest(studentId: number, testId: number): Promise<TestAssignment | undefined> {
+    const assignment = await MongoTestAssignment.findOne({ studentId, testId });
+    return assignment ? this.mapMongoDoc<TestAssignment>(assignment) : undefined;
   }
 
   // ─── Workspace operations ─────────────────────────────────────────────────
